@@ -13,9 +13,7 @@ const middlewareConfiguration = { serializableCheck: false };
 
 export const store = configureStore({
   reducer: { app, home, login, settings, register, editor, articleViewer, profile, articlePage },
-  devTools: {
-    name: 'Conduit',
-  },
+  devTools: true,
   middleware: (getDefaultMiddleware) => getDefaultMiddleware(middlewareConfiguration),
 });
 export type State = ReturnType<typeof store.getState>;

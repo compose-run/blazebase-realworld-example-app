@@ -38,6 +38,7 @@ export async function login(email: string, password: string): Promise<Result<Use
 
     return Ok(guard(object({ user: userDecoder }))(data).user);
   } catch ({ data }) {
+    
     return Err(guard(object({ errors: genericErrorsDecoder }))(data).errors);
   }
 }

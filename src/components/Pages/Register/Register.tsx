@@ -6,12 +6,48 @@ import { initializeRegister, RegisterState, startSigningUp, updateErrors, update
 import { loadUserIntoApp, UserForRegistration } from '../../../types/user';
 import { signUp } from '../../../services/conduit';
 import { ContainerPage } from '../../ContainerPage/ContainerPage';
+import { getRealtimeState, useRealtimeReducer } from '../../../services/compose';
+import { useEffect } from 'react';
+
+getRealtimeState("conduit-users-2").then(console.log)
 
 export function Register() {
   const { errors, signingUp, user } = useStoreWithInitializer(
     ({ register }) => register,
     dispatchOnCall(initializeRegister())
   );
+
+  const [users, emitUserAction] = useRealtimeReducer('conduit-users-2', (users, action) => {
+    if (action.type === "SIGN_UP") {
+      if (true) { // validation succeeds
+        return users.concat([action.user])
+      }
+    }
+  }, [], [])
+
+  function onSignUp(user: UserForRegistration) {
+    return (ev: React.FormEvent) => {
+      ev.preventDefault();
+      store.dispatch(startSigningUp());
+      const publicKey = Math.random()
+      emitUserAction({
+        type: "SIGN_UP",
+        user: {username: user.username, email: user.email, publicKey}
+      })
+    }
+  }
+  
+
+  // also check public key
+  const remoteUser = users.find(u => user.email === u.email && user.username === u.username)
+
+  useEffect(() => {
+    if (remoteUser) {
+      location.hash = '#/';
+      // loadUserIntoApp(user); TODO load something into app with private key
+    }
+  }, [remoteUser])
+
 
   return (
     <div className='auth-page'>
@@ -45,18 +81,3 @@ function onUpdateField(name: string, value: string) {
   store.dispatch(updateField({ name: name as keyof RegisterState['user'], value }));
 }
 
-function onSignUp(user: UserForRegistration) {
-  return async (ev: React.FormEvent) => {
-    ev.preventDefault();
-    store.dispatch(startSigningUp());
-    const result = await signUp(user);
-
-    result.match({
-      err: (e) => store.dispatch(updateErrors(e)),
-      ok: (user) => {
-        location.hash = '#/';
-        loadUserIntoApp(user);
-      },
-    });
-  };
-}
