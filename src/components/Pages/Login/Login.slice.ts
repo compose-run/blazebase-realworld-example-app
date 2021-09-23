@@ -2,7 +2,7 @@ import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 import { GenericErrors } from '../../../types/error';
 
 export interface LoginState {
-  user: {
+  credentials: {
     email: string;
     password: string;
   };
@@ -11,7 +11,7 @@ export interface LoginState {
 }
 
 const initialState: LoginState = {
-  user: {
+  credentials: {
     email: '',
     password: '',
   },
@@ -26,9 +26,9 @@ const slice = createSlice({
     initializeLogin: () => initialState,
     updateField: (
       state,
-      { payload: { name, value } }: PayloadAction<{ name: keyof LoginState['user']; value: string }>
+      { payload: { name, value } }: PayloadAction<{ name: keyof LoginState['credentials']; value: string }>
     ) => {
-      state.user[name] = value;
+      state.credentials[name] = value;
     },
     updateErrors: (state, { payload: errors }: PayloadAction<GenericErrors>) => {
       state.errors = errors;

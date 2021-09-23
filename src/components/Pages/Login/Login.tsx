@@ -1,15 +1,39 @@
 import React from 'react';
-import { login } from '../../../services/conduit';
 import { dispatchOnCall, store } from '../../../state/store';
 import { useStoreWithInitializer } from '../../../state/storeHooks';
-import { loadUserIntoApp } from '../../../types/user';
+import { decryptPrivateKeyWithPassword, keypairFromCredentials, useUsers } from '../../../types/user';
 import { buildGenericFormField } from '../../../types/genericFormField';
 import { GenericForm } from '../../GenericForm/GenericForm';
 import { initializeLogin, LoginState, startLoginIn, updateErrors, updateField } from './Login.slice';
 import { ContainerPage } from '../../ContainerPage/ContainerPage';
+import { loadKeyPair } from '../../App/App.slice';
 
 export function Login() {
-  const { errors, loginIn, user } = useStoreWithInitializer(({ login }) => login, dispatchOnCall(initializeLogin()));
+  const { errors, loginIn, credentials } = useStoreWithInitializer(({ login }) => login, dispatchOnCall(initializeLogin()));
+
+  const [users] = useUsers()
+
+  function signIn(ev: React.FormEvent) {
+    ev.preventDefault();
+  
+    if (store.getState().login.loginIn) return;
+    store.dispatch(startLoginIn());
+  
+    const user = users.find(u => u.email === credentials.email)
+    if (!user) {
+      store.dispatch(updateErrors({"email": ["not found"]}))
+      return 
+    }
+
+    try {
+      const privateKey = decryptPrivateKeyWithPassword(user.encryptedPrivateKey, credentials.password)
+      store.dispatch(loadKeyPair({privateKey, publicKey: user.publicKey}))
+      location.hash = '#/';
+    } catch {
+      // TODO throw if decryption fails
+      store.dispatch(updateErrors({"password": ["is incorrect"]}))
+    }
+  }
 
   return (
     <div className='auth-page'>
@@ -22,7 +46,7 @@ export function Login() {
 
           <GenericForm
             disabled={loginIn}
-            formObject={user}
+            formObject={credentials}
             submitButtonText='Sign in'
             errors={errors}
             onChange={onUpdateField}
@@ -39,25 +63,5 @@ export function Login() {
 }
 
 function onUpdateField(name: string, value: string) {
-  store.dispatch(updateField({ name: name as keyof LoginState['user'], value }));
-}
-
-async function signIn(ev: React.FormEvent) {
-  ev.preventDefault();
-
-  if (store.getState().login.loginIn) return;
-  store.dispatch(startLoginIn());
-
-  const { email, password } = store.getState().login.user;
-  const result = await login(email, password);
-
-  result.match({
-    ok: (user) => {
-      location.hash = '#/';
-      loadUserIntoApp(user);
-    },
-    err: (e) => {
-      store.dispatch(updateErrors(e));
-    },
-  });
+  store.dispatch(updateField({ name: name as keyof LoginState['credentials'], value }));
 }

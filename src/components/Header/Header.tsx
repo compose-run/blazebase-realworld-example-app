@@ -1,10 +1,9 @@
 import { Fragment } from 'react';
 import { HashRouter, NavLink } from 'react-router-dom';
-import { useStore } from '../../state/storeHooks';
-import { User } from '../../types/user';
+import { User, useUser } from '../../types/user';
 
 export function Header() {
-  const { user } = useStore(({ app }) => app);
+  const user = useUser();
 
   return (
     <nav className='navbar navbar-light'>

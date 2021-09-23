@@ -20,6 +20,7 @@ import {
 // TODO - optimistic updates (proccess stream events locally)
 // TODO - disallow "/" in names or encode it for people
 // TODO - catch all firebase errors
+// TODO - garbage collect localstorage cache
 
 const firebaseConfig = {
   apiKey: "AIzaSyDZtMhc933h53_fbJFmyM76Mh6aRreHZE8",
@@ -60,16 +61,26 @@ export const useReducerSafe = <R extends Reducer<any, any>>(
   return [val, safeDispatch];
 };
 
-export const emit = async (type: string, name: string, value: any, ts: { (): FieldValue; (): FieldValue; } | undefined) => {
+export const emit = async (type: string, name: string, value: any, ts: { (): FieldValue; (): FieldValue; } | undefined, id) => {
   try {
     await addDoc(collection(db, type, name, "values"), {
       value,
-      ts: ts || serverTimestamp()
+      ts: ts || serverTimestamp(),
+      id
     });
   } catch (e) {
     console.error("Error emitting event: ", e);
   }
 };
+
+window.composeResolvers = {}
+function emitWithResponse(name, value) {
+  const id = Math.random()
+  const promise = new Promise((resolve, reject) => window.composeResolvers[id] = resolve)
+  emit("streams", name, value, undefined, id)
+
+  return promise
+}
 
 function cacheBehaviorLocalStorage(name: string, value: any, ts: { (): FieldValue; (): FieldValue; (): FieldValue; }) {
   localStorage.setItem(
@@ -170,6 +181,7 @@ interface ReductionEvent<b> {
   value: b;
   ts: typeof serverTimestamp;
   kind: "ReductionEvent";
+  id: any;
 }
 
 interface CacheLoadedEvent<a> {
@@ -240,7 +252,7 @@ type RealtimeReducerContext<a, b> =
 
 function realtimeReducer<a, b>(
   name: string,
-  reducer: (acc: a, curr: b) => a,
+  reducer: (acc: a, curr: b, resolver? : (c: any) => void) => a,
   initialValue: a | Promise<a>,
   loadingValue: a,
   context: RealtimeReducerContext<a, b>,
@@ -357,7 +369,8 @@ function realtimeReducer<a, b>(
     }
   } else if (context.kind === "SetFromInitialValue") {
     if (event.kind === "ReductionEvent") {
-      const currentValue = reducer(context.currentValue, event.value);
+      const currentValue = reducer(context.currentValue, event.value, window.composeResolvers[event.id] || (() => void(0)))
+      delete window.composeResolvers[event.id]
       cacheBehaviorLocalStorage(name, currentValue, event.ts);
       emit("behaviors", name, currentValue, event.ts);
       return {
@@ -371,7 +384,8 @@ function realtimeReducer<a, b>(
   } else if (context.kind === "SetFromCacheOrReduction") {
     if (event.kind === "ReductionEvent") {
       if (event.ts.toMillis() > context.ts.toMillis()) {
-        const currentValue = reducer(context.currentValue, event.value);
+        const currentValue = reducer(context.currentValue, event.value, window.composeResolvers[event.id] || (() => void(0)))
+        delete window.composeResolvers[event.id]
         cacheBehaviorLocalStorage(name, currentValue, event.ts);
         emit("behaviors", name, currentValue, event.ts);
         return {
@@ -390,12 +404,12 @@ function realtimeReducer<a, b>(
   }
 }
 
-export function useRealtimeReducer<a, b>(
+export function useRealtimeReducer<A, B, C>(
   name: string,
-  reducer: (acc: a, curr: b) => a,
-  initialValue: a | Promise<a>,
-  loadingValue: a
-): [a, (b: b) => void] {
+  reducer: (acc: A, curr: B, resolver? : (c: C) => void) => A,
+  initialValue: A | Promise<A>,
+  loadingValue: A
+): [A, (b: B) => Promise<C>] {
   const [realtimeContext, emitEvent] = useReducerSafe(
     (context, event) =>
       realtimeReducer(
@@ -481,7 +495,8 @@ export function useRealtimeReducer<a, b>(
         emitEvent({
           kind: "ReductionEvent",
           value: doc.data().value,
-          ts: doc.data().ts
+          ts: doc.data().ts,
+          id: doc.data().id
         });
       }
     });
@@ -489,7 +504,7 @@ export function useRealtimeReducer<a, b>(
 
   return [
     realtimeContext.currentValue,
-    (value) => emit("streams", name, value)
+    (value) => emitWithResponse(name, value) // TODO - can I return promise param of an extra detail value here?
   ];
 }
 
