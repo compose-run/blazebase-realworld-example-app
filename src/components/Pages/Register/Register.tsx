@@ -5,7 +5,6 @@ import { GenericForm } from '../../GenericForm/GenericForm';
 import { initializeRegister, RegisterState, startSigningUp, updateErrors, updateField } from './Register.slice';
 import { newKeypair, UserForRegistration, useUsers, encryptPrivateKeyWithPassword } from '../../../types/user';
 import { ContainerPage } from '../../ContainerPage/ContainerPage';
-import { useEffect, useState } from 'react';
 import { loadKeyPair } from '../../App/App.slice';
 
 export function Register() {
@@ -23,17 +22,19 @@ export function Register() {
 
       const keypair = newKeypair()
 
-      const { errors } = await emitUserAction({
+      const errors = await emitUserAction({
         type: "SIGN_UP",
         user: {
           username: user.username, 
           email: user.email, 
           publicKey: keypair.publicKey, 
-          encryptedPrivateKey: encryptPrivateKeyWithPassword(temporaryKeypair.privateKey, user.password)
+          encryptedPrivateKey: encryptPrivateKeyWithPassword(keypair.privateKey, user.password),
+          bio: null,
+          image: null
         }
       })
     
-      if (errors.length) {
+      if (Object.keys(errors).length) {
         store.dispatch(updateErrors(errors))
       } else {
         store.dispatch(loadKeyPair(keypair))

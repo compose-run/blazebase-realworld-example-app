@@ -21,6 +21,7 @@ import {
 // TODO - disallow "/" in names or encode it for people
 // TODO - catch all firebase errors
 // TODO - garbage collect localstorage cache
+// TODO - ensure that we only pull one namespace globally so we don't double subscribe and proccess things
 
 const firebaseConfig = {
   apiKey: "AIzaSyDZtMhc933h53_fbJFmyM76Mh6aRreHZE8",
@@ -74,7 +75,7 @@ export const emit = async (type: string, name: string, value: any, ts: { (): Fie
 };
 
 window.composeResolvers = {}
-function emitWithResponse(name, value) {
+export function emitWithResponse(name, value) {
   const id = Math.random()
   const promise = new Promise((resolve, reject) => window.composeResolvers[id] = resolve)
   emit("streams", name, value, undefined, id)

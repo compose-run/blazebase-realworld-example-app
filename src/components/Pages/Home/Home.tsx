@@ -1,15 +1,18 @@
 import { Option } from '@hqoss/monads';
-import { getArticles, getFeed, getTags } from '../../../services/conduit';
+import { getArticles, getFeed } from '../../../services/conduit';
 import { store } from '../../../state/store';
 import { useStoreWithInitializer } from '../../../state/storeHooks';
-import { FeedFilters } from '../../../types/article';
+import { FeedFilters, useTags } from '../../../types/article';
+import { wrap } from '../../../types/user';
 import { ArticlesViewer } from '../../ArticlesViewer/ArticlesViewer';
 import { changePage, loadArticles, startLoadingArticles } from '../../ArticlesViewer/ArticlesViewer.slice';
 import { ContainerPage } from '../../ContainerPage/ContainerPage';
 import { changeTab, loadTags, startLoadingTags } from './Home.slice';
 
 export function Home() {
-  const { tags, selectedTab } = useStoreWithInitializer(({ home }) => home, load);
+  const { selectedTab } = useStoreWithInitializer(({ home }) => home, load);
+
+  const tags = useTags()
 
   return (
     <div className='home-page'>
@@ -26,7 +29,7 @@ export function Home() {
         </div>
 
         <div className='col-md-3'>
-          <HomeSidebar tags={tags} />
+          <HomeSidebar tags={wrap(tags)} />
         </div>
       </ContainerPage>
     </div>
@@ -43,9 +46,6 @@ async function load() {
 
   const multipleArticles = await getFeedOrGlobalArticles();
   store.dispatch(loadArticles(multipleArticles));
-
-  const tagsResult = await getTags();
-  store.dispatch(loadTags(tagsResult.tags));
 }
 
 function renderBanner() {

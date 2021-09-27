@@ -15,15 +15,14 @@ import {
 } from '../../../services/conduit';
 import { store } from '../../../state/store';
 import { useStore } from '../../../state/storeHooks';
-import { Article } from '../../../types/article';
+import { Article, useArticles, useArticleTags } from '../../../types/article';
 import { Comment } from '../../../types/comment';
 import { redirect } from '../../../types/location';
 import { classObjectToClassName } from '../../../types/style';
-import { User } from '../../../types/user';
+import { User, useUsers } from '../../../types/user';
 import { TagList } from '../../ArticlePreview/ArticlePreview';
 import {
   CommentSectionState,
-  initializeArticlePage,
   loadArticle,
   loadComments,
   MetaSectionState,
@@ -38,21 +37,38 @@ import {
 export function ArticlePage() {
   const { slug } = useParams<{ slug: string }>();
 
+  console.log(slug)
+  const [articles] = useArticles();
+  const articleDB = articles && articles.find(a => a.slug === slug)
+
+  if (articles && !articleDB) {
+    redirect('');
+  }
+
+  // TODO convert ArtcileDB to Article on Server
+  const [articleTags] = useArticleTags()
+  const tagList = articleTags && articleTags.filter(articleTag => articleTag.slug === slug).map(({tag}) => tag)
+
+  const [users] = useUsers();
+  const author = articleDB && users.find(u => u.publicKey === articleDB.authorPublicKey)
+
+  const article = {
+    ...articleDB,
+    tagList,
+    author
+  }
+
   const {
-    articlePage: { article, commentSection, metaSection },
+    articlePage: { commentSection, metaSection },
     app: { user },
   } = useStore(({ articlePage, app }) => ({
     articlePage,
     app,
   }));
 
-  useEffect(() => {
-    onLoad(slug);
-  }, [slug]);
 
-  return article.match({
-    none: () => <div>Loading article...</div>,
-    some: (article) => (
+  return article && tagList && author
+    ? 
       <div className='article-page'>
         <ArticlePageBanner {...{ article, metaSection, user }} />
 
@@ -71,22 +87,7 @@ export function ArticlePage() {
           <CommentSection {...{ user, commentSection, article }} />
         </div>
       </div>
-    ),
-  });
-}
-
-async function onLoad(slug: string) {
-  store.dispatch(initializeArticlePage());
-
-  try {
-    const article = await getArticle(slug);
-    store.dispatch(loadArticle(article));
-
-    const comments = await getArticleComments(slug);
-    store.dispatch(loadComments(comments));
-  } catch {
-    redirect('');
-  }
+    : <div>Loading article...</div>
 }
 
 function ArticlePageBanner(props: { article: Article; metaSection: MetaSectionState; user: Option<User> }) {
@@ -144,7 +145,7 @@ function ArticleAuthorInfo({
         <Link className='author' to={`/profile/${username}`}>
           {username}
         </Link>
-        <span className='date'>{format(createdAt, 'PP')}</span>
+        <span className='date'>{format(new Date(createdAt), 'PP')}</span>
       </div>
     </Fragment>
   );

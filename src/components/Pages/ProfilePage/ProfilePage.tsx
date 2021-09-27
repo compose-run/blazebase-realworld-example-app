@@ -1,10 +1,11 @@
 import { useEffect } from 'react';
 import { useLocation, useParams } from 'react-router-dom';
-import { followUser, getArticles, getProfile, unfollowUser } from '../../../services/conduit';
+import { followUser, getArticles, unfollowUser } from '../../../services/conduit';
 import { store } from '../../../state/store';
 import { useStore } from '../../../state/storeHooks';
 import { redirect } from '../../../types/location';
 import { Profile } from '../../../types/profile';
+import { useUsers } from '../../../types/user';
 import { ArticlesViewer } from '../../ArticlesViewer/ArticlesViewer';
 import { changePage, loadArticles, startLoadingArticles } from '../../ArticlesViewer/ArticlesViewer.slice';
 import { UserInfo } from '../../UserInfo/UserInfo';
@@ -17,6 +18,16 @@ export function ProfilePage() {
   useEffect(() => {
     onLoad(username, favorites);
   }, [username]);
+
+  const [users] = useUsers();
+  const userProfile = users.find(u => u.username === username)
+  
+  useEffect(() => {
+    if (userProfile) {
+      store.dispatch(loadProfile(userProfile));
+    }
+  }, [userProfile])
+  
 
   const { profile, submitting } = useStore(({ profile }) => profile);
 
@@ -60,9 +71,6 @@ async function onLoad(username: string, favorites: boolean) {
   store.dispatch(startLoadingArticles());
 
   try {
-    const profile = await getProfile(username);
-    store.dispatch(loadProfile(profile));
-
     const articles = await getArticlesByType(username, favorites);
     store.dispatch(loadArticles(articles));
   } catch {

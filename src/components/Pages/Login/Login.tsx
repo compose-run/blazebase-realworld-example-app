@@ -1,7 +1,7 @@
 import React from 'react';
 import { dispatchOnCall, store } from '../../../state/store';
 import { useStoreWithInitializer } from '../../../state/storeHooks';
-import { decryptPrivateKeyWithPassword, keypairFromCredentials, useUsers } from '../../../types/user';
+import { decryptPrivateKeyWithPassword, useUsers } from '../../../types/user';
 import { buildGenericFormField } from '../../../types/genericFormField';
 import { GenericForm } from '../../GenericForm/GenericForm';
 import { initializeLogin, LoginState, startLoginIn, updateErrors, updateField } from './Login.slice';

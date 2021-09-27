@@ -8,26 +8,13 @@ export interface PublicUser {
   username: string;
   bio: string | null;
   image: string | null;
+  publicKey: string;
 }
 
 export interface User extends PublicUser {
   email: string;
-  publicKey: string;
   encryptedPrivateKey: string;
 }
-
-// issue with decoder library incorrectly converting 
-// non optional fields to optional fields
-// https://github.com/nvie/decoders/issues/750
-// @ts-expect-error 
-export const userDecoder: Decoder<User> = object({
-  email: string,
-  username: string,
-  publicKey: string,
-  encryptedPrivateKey: string,
-  bio: nullable(string),
-  image: nullable(string)
-});
 
 export interface UserSettings extends PublicUser {
   email: string;
@@ -63,7 +50,7 @@ function verifySignature(publiKey, signature) {
 }
 
 // TODO - do this with actual crypto
-function signed(action) {
+export function signed(action) {
   return verifySignature(action.publicKey, action.signature)  
 }
 
@@ -86,9 +73,10 @@ interface UpdateUserAction {
 
 type UserAction = SignUpUserAction | UpdateUserAction
 
-export const useUsers = () => useRealtimeReducer<User[], UserAction, GenericErrors>('conduit-users-10', (users, action, resolve) => {
+export const useUsers = () => useRealtimeReducer<User[], UserAction, GenericErrors>('conduit-users-13', (users, action, resolve) => {
+  let errors = {}
+  let returnValue = users
   if (action.type === "SIGN_UP") {
-    let errors = {}
     if (users.some(u => u.email === action.user.email)) {
       errors['email'] = "already in use"
     }
@@ -99,14 +87,17 @@ export const useUsers = () => useRealtimeReducer<User[], UserAction, GenericErro
       errors['public-key'] = "already in use"
     }
     if (!Object.keys(errors).length) {
-      users.concat([action.user])
+      returnValue = users.concat([action.user])
     }
-    resolve(errors)
-  } else if (action.type === "UPDATE" && signed(action)) {
-    return users.map(u => u.publicKey === action.publicKey ? action.newUser : u)
-  } else {
-    return users
+  } else if (action.type === "UPDATE") {
+    if (signed(action)) {
+      returnValue = users.map(u => u.publicKey === action.publicKey ? action.newUser : u)
+    } else {
+      errors['unauthorized'] = 'to perform update to user'
+    }
   }
+  resolve(errors)
+  return returnValue
 }, [], [])
 
 
@@ -115,7 +106,7 @@ export interface KeyPair {
   privateKey: string;
 }
 
-function wrap<A>(a: A|null|undefined):Option<A> {
+export function wrap<A>(a: A|null|undefined):Option<A> {
   if (a === null || a === undefined){ 
     return None
   } else {
