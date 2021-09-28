@@ -1,35 +1,24 @@
 import { useEffect } from 'react';
 import { useLocation, useParams } from 'react-router-dom';
-import { followUser, getArticles, unfollowUser } from '../../../services/conduit';
+import { followUser, unfollowUser } from '../../../services/conduit';
 import { store } from '../../../state/store';
 import { useStore } from '../../../state/storeHooks';
 import { redirect } from '../../../types/location';
 import { Profile } from '../../../types/profile';
-import { useUsers } from '../../../types/user';
+import { useProfiles, wrap } from '../../../types/user';
 import { ArticlesViewer } from '../../ArticlesViewer/ArticlesViewer';
-import { changePage, loadArticles, startLoadingArticles } from '../../ArticlesViewer/ArticlesViewer.slice';
+import { changePage } from '../../ArticlesViewer/ArticlesViewer.slice';
 import { UserInfo } from '../../UserInfo/UserInfo';
-import { initializeProfile, loadProfile, startSubmitting } from './ProfilePage.slice';
+import { loadProfile, startSubmitting } from './ProfilePage.slice';
 
 export function ProfilePage() {
   const { username } = useParams<{ username: string }>();
   const favorites = useLocation().pathname.endsWith('favorites');
 
-  useEffect(() => {
-    onLoad(username, favorites);
-  }, [username]);
-
-  const [users] = useUsers();
-  const userProfile = users.find(u => u.username === username)
+  const profiles = useProfiles();
+  const profile = wrap(profiles.find(u => u.username === username))
   
-  useEffect(() => {
-    if (userProfile) {
-      store.dispatch(loadProfile(userProfile));
-    }
-  }, [userProfile])
-  
-
-  const { profile, submitting } = useStore(({ profile }) => profile);
+  const { submitting } = useStore(({ profile }) => profile);
 
   return (
     <div className='profile-page'>
@@ -66,22 +55,9 @@ export function ProfilePage() {
   );
 }
 
-async function onLoad(username: string, favorites: boolean) {
-  store.dispatch(initializeProfile());
-  store.dispatch(startLoadingArticles());
-
-  try {
-    const articles = await getArticlesByType(username, favorites);
-    store.dispatch(loadArticles(articles));
-  } catch {
-    location.href = '#/';
-  }
-}
-
-async function getArticlesByType(username: string, favorites: boolean) {
-  const { currentPage } = store.getState().articleViewer;
-  return await getArticles({ [favorites ? 'favorited' : 'author']: username, offset: (currentPage - 1) * 10 });
-}
+// TODO - put these filters into ArticlesViewer
+  // const { currentPage } = store.getState().articleViewer;
+  // return await getArticles({ [favorites ? 'favorited' : 'author']: username, offset: (currentPage - 1) * 10 });
 
 function onFollowToggle(profile: Profile): () => void {
   return async () => {
@@ -102,14 +78,12 @@ function onTabChange(username: string): (page: string) => void {
   return async (page) => {
     const favorited = page === 'Favorited Articles';
     location.hash = `#/profile/${username}${!favorited ? '' : '/favorites'}`;
-    store.dispatch(startLoadingArticles());
-    store.dispatch(loadArticles(await getArticlesByType(username, favorited)));
+    // TODO filter favorited
   };
 }
 
 function onPageChange(username: string, favorited: boolean): (index: number) => void {
   return async (index) => {
     store.dispatch(changePage(index));
-    store.dispatch(loadArticles(await getArticlesByType(username, favorited)));
   };
 }

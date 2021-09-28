@@ -1,13 +1,11 @@
-import { Option } from '@hqoss/monads';
-import { getArticles, getFeed } from '../../../services/conduit';
 import { store } from '../../../state/store';
 import { useStoreWithInitializer } from '../../../state/storeHooks';
-import { FeedFilters, useArticles, useTags } from '../../../types/article';
+import { useTags } from '../../../types/article';
 import { wrap } from '../../../types/user';
 import { ArticlesViewer } from '../../ArticlesViewer/ArticlesViewer';
-import { changePage, loadArticles, startLoadingArticles } from '../../ArticlesViewer/ArticlesViewer.slice';
+import { changePage } from '../../ArticlesViewer/ArticlesViewer.slice';
 import { ContainerPage } from '../../ContainerPage/ContainerPage';
-import { changeTab, loadTags, startLoadingTags } from './Home.slice';
+import { changeTab } from './Home.slice';
 
 export function Home() {
   const { selectedTab } = useStoreWithInitializer(({ home }) => home, load);
@@ -35,15 +33,10 @@ export function Home() {
 }
 
 async function load() {
-  store.dispatch(startLoadingArticles()); // TODO build this into the local check not in the store
-  store.dispatch(startLoadingTags()); // TODO build this into the local check not in the store
-
+  // TODO
   if (store.getState().app.user.isSome()) {
     store.dispatch(changeTab('Your Feed'));
   }
-
-  // const multipleArticles = await getFeedOrGlobalArticles();
-  // store.dispatch(loadArticles(multipleArticles));
 }
 
 function renderBanner() {
@@ -69,23 +62,6 @@ async function onPageChange(index: number) {
 
 async function onTabChange(tab: string) {
   store.dispatch(changeTab(tab));
-  store.dispatch(startLoadingArticles());
-
-  const multipleArticles = await getFeedOrGlobalArticles();
-  store.dispatch(loadArticles(multipleArticles));
-}
-
-async function getFeedOrGlobalArticles(filters: FeedFilters = {}) {
-  const { selectedTab } = store.getState().home;
-  const finalFilters = {
-    ...filters,
-    tag: selectedTab.slice(2),
-  };
-
-  // TODO this
-  return await (selectedTab === 'Your Feed' ? getFeed : getArticles)(
-    !selectedTab.startsWith('#') ? filters : finalFilters
-  );
 }
 
 function HomeSidebar() {

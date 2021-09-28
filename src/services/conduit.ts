@@ -5,27 +5,11 @@ import settings from '../config/settings';
 import {
   Article,
   articleDecoder,
-  ArticleForEditor,
-  ArticlesFilters,
-  FeedFilters,
-  MultipleArticles,
-  multipleArticlesDecoder,
 } from '../types/article';
 import { Comment, commentDecoder } from '../types/comment';
-import { GenericErrors, genericErrorsDecoder } from '../types/error';
-import { objectToQueryString } from '../types/object';
 import { Profile, profileDecoder } from '../types/profile';
 
 axios.defaults.baseURL = settings.baseApiUrl;
-
-export async function getArticles(filters: ArticlesFilters = {}): Promise<MultipleArticles> {
-  const finalFilters: ArticlesFilters = {
-    limit: 10,
-    offset: 0,
-    ...filters,
-  };
-  return guard(multipleArticlesDecoder)((await axios.get(`articles?${objectToQueryString(finalFilters)}`)).data);
-}
 
 export async function favoriteArticle(slug: string): Promise<Article> {
   return guard(object({ article: articleDecoder }))((await axios.post(`articles/${slug}/favorite`)).data).article;
@@ -33,21 +17,6 @@ export async function favoriteArticle(slug: string): Promise<Article> {
 
 export async function unfavoriteArticle(slug: string): Promise<Article> {
   return guard(object({ article: articleDecoder }))((await axios.delete(`articles/${slug}/favorite`)).data).article;
-}
-
-export async function getArticle(slug: string): Promise<Article> {
-  const { data } = await axios.get(`articles/${slug}`);
-  return guard(object({ article: articleDecoder }))(data).article;
-}
-
-export async function updateArticle(slug: string, article: ArticleForEditor): Promise<Result<Article, GenericErrors>> {
-  try {
-    const { data } = await axios.put(`articles/${slug}`, { article });
-
-    return Ok(guard(object({ article: articleDecoder }))(data).article);
-  } catch ({ response: { data } }) {
-    return Err(guard(object({ errors: genericErrorsDecoder }))(data).errors);
-  }
 }
 
 export async function followUser(username: string): Promise<Profile> {
@@ -58,15 +27,6 @@ export async function followUser(username: string): Promise<Profile> {
 export async function unfollowUser(username: string): Promise<Profile> {
   const { data } = await axios.delete(`profiles/${username}/follow`);
   return guard(object({ profile: profileDecoder }))(data).profile;
-}
-
-export async function getFeed(filters: FeedFilters = {}): Promise<MultipleArticles> {
-  const finalFilters: ArticlesFilters = {
-    limit: 10,
-    offset: 0,
-    ...filters,
-  };
-  return guard(multipleArticlesDecoder)((await axios.get(`articles/feed?${objectToQueryString(finalFilters)}`)).data);
 }
 
 export async function getArticleComments(slug: string): Promise<Comment[]> {

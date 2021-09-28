@@ -1,7 +1,7 @@
 import { FormEvent, useEffect } from 'react';
 import { store } from '../../../state/store';
 import { useStore } from '../../../state/storeHooks';
-import { useArticles, useArticlesDB } from '../../../types/article';
+import { useArticlesDB } from '../../../types/article';
 import { sign } from '../../../types/user';
 import { ArticleEditor } from '../../ArticleEditor/ArticleEditor';
 import { initializeEditor, startSubmitting, updateErrors } from '../../ArticleEditor/ArticleEditor.slice';

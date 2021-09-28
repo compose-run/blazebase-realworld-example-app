@@ -1,50 +1,56 @@
-import React, { Fragment, useEffect } from 'react';
+import { Fragment, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
-import { getArticle, updateArticle } from '../../../services/conduit';
 import { store } from '../../../state/store';
 import { useStore } from '../../../state/storeHooks';
+import { useArticles, useArticlesDB } from '../../../types/article';
+import { sign, useUser } from '../../../types/user';
 import { ArticleEditor } from '../../ArticleEditor/ArticleEditor';
-import { initializeEditor, loadArticle, startSubmitting, updateErrors } from '../../ArticleEditor/ArticleEditor.slice';
+import { loadArticle, startSubmitting, updateErrors } from '../../ArticleEditor/ArticleEditor.slice';
 
 export function EditArticle() {
   const { slug } = useParams<{ slug: string }>();
-  const { loading } = useStore(({ editor }) => editor);
+  const user = useUser();
+  const { keypair } = useStore(({ app }) => app);
+
+  // doesn't seem to reset to inital state if you edit -> redirect to view -> edit (remove loading from atom and make it a local state thing)
+
+  const [, emitArticlesAction] = useArticlesDB()
+
+  const articles = useArticles()
+  const article = articles && articles.find(a => a.slug === slug)
 
   useEffect(() => {
-    _loadArticle(slug);
-  }, [slug]);
-
-  return <Fragment>{!loading && <ArticleEditor onSubmit={onSubmit(slug)} />}</Fragment>;
-}
-
-async function _loadArticle(slug: string) {
-  store.dispatch(initializeEditor());
-  try {
-    const { title, description, body, tagList, author } = await getArticle(slug);
-
-    if (author.username !== store.getState().app.user.unwrap().username) {
+    if (article && keypair && article.author.publicKey !== keypair.unwrap().publicKey) {
       location.hash = '#/';
       return;
     }
+  
+    store.dispatch(loadArticle(article));
+  }, [article])
+  
 
-    store.dispatch(loadArticle({ title, description, body, tagList }));
-  } catch {
-    location.hash = '#/';
-  }
-}
-
-function onSubmit(slug: string): (ev: React.FormEvent) => void {
-  return async (ev) => {
+  async function onSubmit(ev) {
     ev.preventDefault();
-
     store.dispatch(startSubmitting());
-    const result = await updateArticle(slug, store.getState().editor.article);
 
-    result.match({
-      err: (errors) => store.dispatch(updateErrors(errors)),
-      ok: ({ slug }) => {
-        location.hash = `#/article/${slug}`;
-      },
-    });
-  };
+    if (keypair.isNone()) { return }
+
+    // doesn't seem to work
+    const { errors } = await emitArticlesAction(sign(keypair.unwrap().privateKey, {
+      type: "UpdateArticleAction",
+      article: store.getState().editor.article,
+      slug,
+      publicKey: keypair.unwrap().publicKey
+    }))
+
+    if (errors) {
+      store.dispatch(updateErrors(errors))
+    } else {
+      location.hash = `#/article/${slug}`;
+    }
+  }
+
+
+  return <Fragment>{article && <ArticleEditor onSubmit={onSubmit} />}</Fragment>;
 }
+

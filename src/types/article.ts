@@ -1,6 +1,6 @@
 import { None, Some, Option } from '@hqoss/monads';
 import { array, boolean, Decoder, iso8601, number, object, string } from 'decoders';
-import { emitWithResponse, useRealtimeReducer } from '../services/compose';
+import { emitWithResponse, getRealtimeState, useRealtimeReducer } from '../services/compose';
 import { GenericErrors } from './error';
 import { Profile, profileDecoder } from './profile';
 import { signed, useProfiles, useUsers } from './user';
@@ -35,12 +35,6 @@ export interface MultipleArticles {
   articles: Article[];
   articlesCount: number;
 }
-
-export const multipleArticlesDecoder: Decoder<MultipleArticles> = object({
-  articles: array(articleDecoder),
-  articlesCount: number,
-});
-
 export interface ArticleForEditor {
   title: string;
   description: string;
@@ -88,11 +82,10 @@ export interface ArticleDB {
   authorPublicKey: string;
 }
 
-
-
 interface ArticleResolve { slug?: string, errors?: GenericErrors }
 
-export const useArticlesDB = () => useRealtimeReducer<ArticleDB[] | null, ArticleAction, ArticleResolve>('conduit-articles-11', (articles, action, resolve) => {
+const articlesVersion = 16
+export const useArticlesDB = () => useRealtimeReducer<ArticleDB[] | null, ArticleAction, ArticleResolve>(`conduit-articles-${articlesVersion}`, (articles, action, resolve) => {
   let errors = {}
   let returnValue = articles
   let slug = 'slug' in action ? action.slug : Math.random().toString() // TODO This either needs to happen client side or be deterministic
@@ -132,7 +125,7 @@ export const useArticlesDB = () => useRealtimeReducer<ArticleDB[] | null, Articl
   }
   
   return returnValue
-}, [], null)
+}, getRealtimeState(`conduit-articles-${articlesVersion-1}`), null)
 
 
 interface ArticleTag {
@@ -148,7 +141,7 @@ interface UpdateArticleTags {
 
 type ArticleTagAction = UpdateArticleTags;
 
-const articleTagsDbId = 'conduit-tags-6'
+const articleTagsDbId = `conduit-tags-${articlesVersion}`
 export const useArticleTags = () => useRealtimeReducer<ArticleTag[] | null, ArticleTagAction, GenericErrors>(articleTagsDbId, (articleTagsOption, action, resolve) => {
   let errors = {}
   let returnValue = articleTagsOption as ArticleTag[]
@@ -162,7 +155,7 @@ export const useArticleTags = () => useRealtimeReducer<ArticleTag[] | null, Arti
   }
   resolve(errors)
   return returnValue
-}, [], null) // TODO - need to find way to encode types to and from firebase...
+}, getRealtimeState(`conduit-tags-${articlesVersion-1}`), null) // TODO - need to find way to encode types to and from firebase...
 
 export const useTags = () => {
   const [articleTags] = useArticleTags()

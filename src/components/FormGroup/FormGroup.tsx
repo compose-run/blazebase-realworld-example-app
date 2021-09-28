@@ -82,7 +82,7 @@ export function ListFormGroup({
         onKeyUp={onListFieldKeyUp(onEnter)}
       />
       <div className='tag-list'>
-        {listValue.map((value, index) => (
+        {listValue && listValue.map((value, index) => (
           <span key={value} className='tag-default tag-pill' onClick={() => onRemoveItem(index)}>
             <i className='ion-close-round'></i>
             {value}

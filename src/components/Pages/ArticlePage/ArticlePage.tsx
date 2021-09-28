@@ -8,7 +8,6 @@ import {
   deleteComment,
   favoriteArticle,
   followUser,
-  getArticle,
   getArticleComments,
   unfavoriteArticle,
   unfollowUser,
@@ -19,7 +18,7 @@ import { Article, useArticles, useArticleTags } from '../../../types/article';
 import { Comment } from '../../../types/comment';
 import { redirect } from '../../../types/location';
 import { classObjectToClassName } from '../../../types/style';
-import { User, useUsers } from '../../../types/user';
+import { User, useUser, useUsers } from '../../../types/user';
 import { TagList } from '../../ArticlePreview/ArticlePreview';
 import {
   CommentSectionState,
@@ -46,17 +45,15 @@ export function ArticlePage() {
 
   const {
     articlePage: { commentSection, metaSection },
-    app: { user },
   } = useStore(({ articlePage, app }) => ({
     articlePage,
     app,
   }));
 
-
   return article
     ? 
       <div className='article-page'>
-        <ArticlePageBanner {...{ article, metaSection, user }} />
+        <ArticlePageBanner {...{ article, metaSection }} />
 
         <div className='container page'>
           <div className='row article-content'>
@@ -67,16 +64,18 @@ export function ArticlePage() {
           <hr />
 
           <div className='article-actions'>
-            <ArticleMeta {...{ article, metaSection, user }} />
+            <ArticleMeta {...{ article, metaSection }} />
           </div>
 
-          <CommentSection {...{ user, commentSection, article }} />
+          <CommentSection {...{ commentSection, article }} />
         </div>
       </div>
     : <div>Loading article...</div>
 }
 
-function ArticlePageBanner(props: { article: Article; metaSection: MetaSectionState; user: Option<User> }) {
+function ArticlePageBanner(props: { article: Article; metaSection: MetaSectionState }) {
+  const user = useUser();
+
   return (
     <div className='banner'>
       <div className='container'>
@@ -91,12 +90,13 @@ function ArticlePageBanner(props: { article: Article; metaSection: MetaSectionSt
 function ArticleMeta({
   article,
   metaSection: { submittingFavorite, submittingFollow, deletingArticle },
-  user,
 }: {
   article: Article;
   metaSection: MetaSectionState;
   user: Option<User>;
 }) {
+  const user = useUser();
+
   return (
     <div className='article-meta'>
       <ArticleAuthorInfo article={article} />
@@ -242,14 +242,14 @@ async function onDeleteArticle(slug: string) {
 }
 
 function CommentSection({
-  user,
   article,
   commentSection: { submittingComment, commentBody, comments },
 }: {
-  user: Option<User>;
   article: Article;
   commentSection: CommentSectionState;
 }) {
+  const user = useUser();
+  
   return (
     <div className='row'>
       <div className='col-xs-12 col-md-8 offset-md-2'>
