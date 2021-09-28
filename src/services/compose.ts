@@ -21,7 +21,7 @@ import {
 // TODO - disallow "/" in names or encode it for people
 // TODO - catch all firebase errors
 // TODO - garbage collect localstorage cache
-// TODO - ensure that we only pull one namespace globally so we don't double subscribe and proccess things
+// TODO - ensure that we only pull one namespace globally so we don't double subscribe and proccess things (maybe via wrapping in memoize?)
 
 const firebaseConfig = {
   apiKey: "AIzaSyDZtMhc933h53_fbJFmyM76Mh6aRreHZE8",
@@ -142,25 +142,25 @@ export const getRealtimeState = (name: string) => {
 // }
 
 // TODO - make this work even when not in a component on the page by pulling def from firebase
-export const useRealtimeState = (name: string) => {
-  const [realtimeState, setRealtimeState] = useState({ progress: "loading", state: null });
-  useEffect(() => {
-    const behaviorFromCache = query(
-      collection(db, "behaviors", name, "values"),
-      orderBy("ts", "desc"),
-      limit(1)
-    );
-    return onSnapshot(behaviorFromCache, (querySnapshot) => {
-      let doc = querySnapshot.docs[0];
-      if (doc) {
-        setRealtimeState({ progress: "loaded", state: doc.data().value });
-      } else {
-        setRealtimeState({ progress: "loaded", state: null });
-      }
-    });
-  }, [name]);
-  return [realtimeState.state, realtimeState.progress === "loading"];
-};
+// export const useRealtimeState = (name: string) => {
+//   const [realtimeState, setRealtimeState] = useState({ progress: "loading", state: null });
+//   useEffect(() => {
+//     const behaviorFromCache = query(
+//       collection(db, "behaviors", name, "values"),
+//       orderBy("ts", "desc"),
+//       limit(1)
+//     );
+//     return onSnapshot(behaviorFromCache, (querySnapshot) => {
+//       let doc = querySnapshot.docs[0];
+//       if (doc) {
+//         setRealtimeState({ progress: "loaded", state: doc.data().value });
+//       } else {
+//         setRealtimeState({ progress: "loaded", state: null });
+//       }
+//     });
+//   }, [name]);
+//   return [realtimeState.state, realtimeState.progress === "loading"];
+// };
 
 function saveReducer(name: string, reducerCode: string, initial: any) {
   setDoc(doc(db, "behaviors-reducers", name), {
@@ -505,8 +505,8 @@ export function useRealtimeReducer<A, B, C>(
 
   return [
     realtimeContext.currentValue,
-    (value) => emitWithResponse(name, value) // TODO - can I return promise param of an extra detail value here?
+    (value) => emitWithResponse(name, value)
   ];
 }
 
-// TODO - useOptimisticRealtimeReducer
+// TODO - useOptimisticRealtimeReducer which doesn't wait for server roundtrip of emitted event to reduce that event

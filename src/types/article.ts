@@ -3,7 +3,7 @@ import { array, boolean, Decoder, iso8601, number, object, string } from 'decode
 import { emitWithResponse, useRealtimeReducer } from '../services/compose';
 import { GenericErrors } from './error';
 import { Profile, profileDecoder } from './profile';
-import { signed } from './user';
+import { signed, useProfiles, useUsers } from './user';
 
 export interface Article {
   slug: string;
@@ -88,13 +88,14 @@ export interface ArticleDB {
   authorPublicKey: string;
 }
 
+
+
 interface ArticleResolve { slug?: string, errors?: GenericErrors }
 
-export const useArticles = () => useRealtimeReducer<ArticleDB[] | null, ArticleAction, ArticleResolve>('conduit-articles-9', (articles, action, resolve) => {
+export const useArticlesDB = () => useRealtimeReducer<ArticleDB[] | null, ArticleAction, ArticleResolve>('conduit-articles-11', (articles, action, resolve) => {
   let errors = {}
   let returnValue = articles
   let slug = 'slug' in action ? action.slug : Math.random().toString() // TODO This either needs to happen client side or be deterministic
-  console.log(slug)
   if (signed(action)) {
     if (action.type === "CreateArticleAction") {
       returnValue = articles.concat([{
@@ -147,7 +148,7 @@ interface UpdateArticleTags {
 
 type ArticleTagAction = UpdateArticleTags;
 
-const articleTagsDbId = 'conduit-tags-5'
+const articleTagsDbId = 'conduit-tags-6'
 export const useArticleTags = () => useRealtimeReducer<ArticleTag[] | null, ArticleTagAction, GenericErrors>(articleTagsDbId, (articleTagsOption, action, resolve) => {
   let errors = {}
   let returnValue = articleTagsOption as ArticleTag[]
@@ -170,6 +171,27 @@ export const useTags = () => {
 
 function updateArticleTags(payload: {slug: string, tagList: string[]}) {
   return emitWithResponse(articleTagsDbId, {...payload, type: "UpdateArticleTags"})
+}
+
+export const useArticles = ():Article[] => {
+  const [articlesDB] = useArticlesDB();
+  const [articleTags] = useArticleTags()
+  const authors = useProfiles();
+
+  const articles = articlesDB && articleTags && authors && articlesDB.map(articleDB => ({
+    slug: articleDB.slug,
+    title: articleDB.title,
+    description: articleDB.description,
+    body: articleDB.body,
+    tagList: articleTags.filter(articleTag => articleTag.slug === articleDB.slug).map(({tag}) => tag),
+    createdAt: new Date(articleDB.createdAt),
+    updatedAt: new Date(articleDB.updatedAt),
+    favorited: false, // TODO
+    favoritesCount: 0, // TODO
+    author: authors.find(u => u.publicKey === articleDB.authorPublicKey),
+  }))
+
+  return articles
 }
 
 /*

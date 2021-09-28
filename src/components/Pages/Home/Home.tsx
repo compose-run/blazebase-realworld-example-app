@@ -2,7 +2,7 @@ import { Option } from '@hqoss/monads';
 import { getArticles, getFeed } from '../../../services/conduit';
 import { store } from '../../../state/store';
 import { useStoreWithInitializer } from '../../../state/storeHooks';
-import { FeedFilters, useTags } from '../../../types/article';
+import { FeedFilters, useArticles, useTags } from '../../../types/article';
 import { wrap } from '../../../types/user';
 import { ArticlesViewer } from '../../ArticlesViewer/ArticlesViewer';
 import { changePage, loadArticles, startLoadingArticles } from '../../ArticlesViewer/ArticlesViewer.slice';
@@ -11,8 +11,6 @@ import { changeTab, loadTags, startLoadingTags } from './Home.slice';
 
 export function Home() {
   const { selectedTab } = useStoreWithInitializer(({ home }) => home, load);
-
-  const tags = useTags()
 
   return (
     <div className='home-page'>
@@ -29,7 +27,7 @@ export function Home() {
         </div>
 
         <div className='col-md-3'>
-          <HomeSidebar tags={wrap(tags)} />
+          <HomeSidebar />
         </div>
       </ContainerPage>
     </div>
@@ -37,15 +35,15 @@ export function Home() {
 }
 
 async function load() {
-  store.dispatch(startLoadingArticles());
-  store.dispatch(startLoadingTags());
+  store.dispatch(startLoadingArticles()); // TODO build this into the local check not in the store
+  store.dispatch(startLoadingTags()); // TODO build this into the local check not in the store
 
   if (store.getState().app.user.isSome()) {
     store.dispatch(changeTab('Your Feed'));
   }
 
-  const multipleArticles = await getFeedOrGlobalArticles();
-  store.dispatch(loadArticles(multipleArticles));
+  // const multipleArticles = await getFeedOrGlobalArticles();
+  // store.dispatch(loadArticles(multipleArticles));
 }
 
 function renderBanner() {
@@ -67,9 +65,6 @@ function buildTabsNames(selectedTab: string) {
 
 async function onPageChange(index: number) {
   store.dispatch(changePage(index));
-
-  const multipleArticles = await getFeedOrGlobalArticles({ offset: (index - 1) * 10 });
-  store.dispatch(loadArticles(multipleArticles));
 }
 
 async function onTabChange(tab: string) {
@@ -87,17 +82,20 @@ async function getFeedOrGlobalArticles(filters: FeedFilters = {}) {
     tag: selectedTab.slice(2),
   };
 
+  // TODO this
   return await (selectedTab === 'Your Feed' ? getFeed : getArticles)(
     !selectedTab.startsWith('#') ? filters : finalFilters
   );
 }
 
-function HomeSidebar({ tags }: { tags: Option<string[]> }) {
+function HomeSidebar() {
+  const tags = useTags()
+
   return (
     <div className='sidebar'>
       <p>Popular Tags</p>
-
-      {tags.match({
+      
+      {wrap(tags).match({
         none: () => <span>Loading tags...</span>,
         some: (tags) => (
           <div className='tag-list'>

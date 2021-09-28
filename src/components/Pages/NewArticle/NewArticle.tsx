@@ -1,7 +1,7 @@
 import { FormEvent, useEffect } from 'react';
 import { store } from '../../../state/store';
 import { useStore } from '../../../state/storeHooks';
-import { useArticles } from '../../../types/article';
+import { useArticles, useArticlesDB } from '../../../types/article';
 import { sign } from '../../../types/user';
 import { ArticleEditor } from '../../ArticleEditor/ArticleEditor';
 import { initializeEditor, startSubmitting, updateErrors } from '../../ArticleEditor/ArticleEditor.slice';
@@ -12,7 +12,7 @@ export function NewArticle() {
   }, []);
 
   const { keypair } = useStore(({ app }) => app);
-  const [, emitArticleAction] = useArticles();
+  const [, emitArticleAction] = useArticlesDB();
 
 
   async function onSubmit(ev: FormEvent) {

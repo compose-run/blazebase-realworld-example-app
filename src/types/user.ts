@@ -3,6 +3,7 @@ import { Decoder, nullable, object, string } from 'decoders';
 import { useRealtimeReducer } from '../services/compose';
 import { useStore } from '../state/storeHooks';
 import { GenericErrors } from './error';
+import { Profile } from './profile';
 
 export interface PublicUser {
   username: string;
@@ -100,6 +101,10 @@ export const useUsers = () => useRealtimeReducer<User[], UserAction, GenericErro
   return returnValue
 }, [], [])
 
+export const useProfiles = ():Profile[] => {
+  const [ users ] = useUsers()
+  return users.map(user => ({...user, following: false})) // TODO
+}
 
 export interface KeyPair {
   publicKey: string;

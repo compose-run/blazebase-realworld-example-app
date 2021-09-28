@@ -37,25 +37,11 @@ import {
 export function ArticlePage() {
   const { slug } = useParams<{ slug: string }>();
 
-  console.log(slug)
-  const [articles] = useArticles();
-  const articleDB = articles && articles.find(a => a.slug === slug)
+  const articles = useArticles();
+  const article = articles && articles.find(a => a.slug === slug)
 
-  if (articles && !articleDB) {
+  if (articles && !article) {
     redirect('');
-  }
-
-  // TODO convert ArtcileDB to Article on Server
-  const [articleTags] = useArticleTags()
-  const tagList = articleTags && articleTags.filter(articleTag => articleTag.slug === slug).map(({tag}) => tag)
-
-  const [users] = useUsers();
-  const author = articleDB && users.find(u => u.publicKey === articleDB.authorPublicKey)
-
-  const article = {
-    ...articleDB,
-    tagList,
-    author
   }
 
   const {
@@ -67,7 +53,7 @@ export function ArticlePage() {
   }));
 
 
-  return article && tagList && author
+  return article
     ? 
       <div className='article-page'>
         <ArticlePageBanner {...{ article, metaSection, user }} />

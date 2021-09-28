@@ -2,8 +2,9 @@ import { Fragment } from 'react';
 import { favoriteArticle, unfavoriteArticle } from '../../services/conduit';
 import { store } from '../../state/store';
 import { useStore } from '../../state/storeHooks';
-import { Article } from '../../types/article';
+import { Article, useArticles } from '../../types/article';
 import { classObjectToClassName } from '../../types/style';
+import { wrap } from '../../types/user';
 import { ArticlePreview } from '../ArticlePreview/ArticlePreview';
 import { Pagination } from '../Pagination/Pagination';
 import { ArticleViewerState, endSubmittingFavorite, startSubmittingFavorite } from './ArticlesViewer.slice';
@@ -21,12 +22,18 @@ export function ArticlesViewer({
   onPageChange?: (index: number) => void;
   onTabChange?: (tab: string) => void;
 }) {
-  const { articles, articlesCount, currentPage } = useStore(({ articleViewer }) => articleViewer);
+  const { currentPage } = useStore(({ articleViewer }) => articleViewer);
+
+  const allArticles = useArticles()
+
+  // TODO - add feed or global article filters
+  const articles = allArticles && allArticles.slice((currentPage - 1) * 10, currentPage * 10)
+  const articlesCount = allArticles ? allArticles.length : 0
 
   return (
     <Fragment>
       <ArticlesTabSet {...{ tabs, selectedTab, toggleClassName, onTabChange }} />
-      <ArticleList articles={articles} />
+      <ArticleList articles={wrap(articles)} />
       <Pagination currentPage={currentPage} count={articlesCount} itemsPerPage={10} onPageChange={onPageChange} />
     </Fragment>
   );
@@ -71,7 +78,7 @@ function Tab({ tab, active, onClick }: { tab: string; active: boolean; onClick: 
   );
 }
 
-function ArticleList({ articles }: { articles: ArticleViewerState['articles'] }) {
+function ArticleList({ articles }: { articles  }) { // articles: ArticleViewerState['articles']
   return articles.match({
     none: () => (
       <div className='article-preview' key={1}>
@@ -85,12 +92,12 @@ function ArticleList({ articles }: { articles: ArticleViewerState['articles'] })
             No articles are here... yet.
           </div>
         )}
-        {articles.map(({ article, isSubmitting }, index) => (
+        {articles.map((article, index) => (
           <ArticlePreview
             key={article.slug}
             article={article}
-            isSubmitting={isSubmitting}
-            onFavoriteToggle={isSubmitting ? undefined : onFavoriteToggle(index, article)}
+            isSubmitting={false} // TODO
+            onFavoriteToggle={undefined} // TODO: {isSubmitting ? undefined : onFavoriteToggle(index, article)}
           />
         ))}
       </Fragment>
