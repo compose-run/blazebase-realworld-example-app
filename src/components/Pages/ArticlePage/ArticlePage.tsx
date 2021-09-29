@@ -1,10 +1,9 @@
 import { Option } from '@hqoss/monads';
 import { format } from 'date-fns';
-import React, { Fragment, useEffect, useState } from 'react';
+import React, { Fragment, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import {
   createComment,
-  deleteArticle,
   deleteComment,
   followUser,
   getArticleComments,
@@ -12,20 +11,16 @@ import {
 } from '../../../services/conduit';
 import { store } from '../../../state/store';
 import { useStore } from '../../../state/storeHooks';
-import { Article, useArticleFavorites, useArticles, useArticleTags } from '../../../types/article';
+import { Article, useArticleFavorites, useArticles, useArticlesDB } from '../../../types/article';
 import { Comment } from '../../../types/comment';
 import { redirect } from '../../../types/location';
 import { classObjectToClassName } from '../../../types/style';
-import { User, useUser, useUsers } from '../../../types/user';
+import { sign, User, useUser } from '../../../types/user';
 import { TagList } from '../../ArticlePreview/ArticlePreview';
 import {
   CommentSectionState,
-  loadArticle,
   loadComments,
-  MetaSectionState,
-  startDeletingArticle,
   startSubmittingComment,
-  startSubmittingFavorite,
   startSubmittingFollow,
   updateAuthor,
   updateCommentBody,
@@ -42,7 +37,7 @@ export function ArticlePage() {
   }
 
   const {
-    articlePage: { commentSection, metaSection },
+    articlePage: { commentSection },
   } = useStore(({ articlePage, app }) => ({
     articlePage,
     app,
@@ -51,7 +46,7 @@ export function ArticlePage() {
   return article
     ? 
       <div className='article-page'>
-        <ArticlePageBanner {...{ article, metaSection }} />
+        <ArticlePageBanner {...{ article }} />
 
         <div className='container page'>
           <div className='row article-content'>
@@ -62,7 +57,7 @@ export function ArticlePage() {
           <hr />
 
           <div className='article-actions'>
-            <ArticleMeta {...{ article, metaSection }} />
+            <ArticleMeta {...{ article }} />
           </div>
 
           <CommentSection {...{ commentSection, article }} />
@@ -71,9 +66,7 @@ export function ArticlePage() {
     : <div>Loading article...</div>
 }
 
-function ArticlePageBanner(props: { article: Article; metaSection: MetaSectionState }) {
-  const user = useUser();
-
+function ArticlePageBanner(props: { article: Article }) {
   return (
     <div className='banner'>
       <div className='container'>
@@ -87,11 +80,8 @@ function ArticlePageBanner(props: { article: Article; metaSection: MetaSectionSt
 
 function ArticleMeta({
   article,
-  metaSection: { submittingFavorite, submittingFollow, deletingArticle },
 }: {
   article: Article;
-  metaSection: MetaSectionState;
-  user: Option<User>;
 }) {
   const user = useUser();
 
@@ -100,12 +90,10 @@ function ArticleMeta({
       <ArticleAuthorInfo article={article} />
 
       {user.isSome() && user.unwrap().username === article.author.username ? (
-        <OwnerArticleMetaActions article={article} deletingArticle={deletingArticle} />
+        <OwnerArticleMetaActions article={article} />
       ) : (
         <NonOwnerArticleMetaActions
           article={article}
-          submittingFavorite={submittingFavorite}
-          submittingFollow={submittingFollow}
         />
       )}
     </div>
@@ -218,12 +206,27 @@ async function onFollow(username: string, following: boolean) {
 
 
 function OwnerArticleMetaActions({
-  article: { slug },
-  deletingArticle,
+  article: { slug }
 }: {
   article: Article;
-  deletingArticle: boolean;
 }) {
+  const [deleting, setDeleting] = useState(false)
+
+  const { keypair } = useStore(({ app }) => app);
+  const [, emitArticleAction] = useArticlesDB()
+
+  async function onDeleteArticle(slug: string) {
+    if (keypair.isNone()) { redirect(''); return; }
+
+    setDeleting(true)
+
+    await emitArticleAction(sign(keypair.unwrap().privateKey, {
+      type: "DeleteArticleAction",
+      slug,
+      publicKey: keypair.unwrap().publicKey
+    }))
+  }
+
   return (
     <Fragment>
       <button className='btn btn-outline-secondary btn-sm' onClick={() => redirect(`editor/${slug}`)}>
@@ -232,19 +235,13 @@ function OwnerArticleMetaActions({
       &nbsp;
       <button
         className='btn btn-outline-danger btn-sm'
-        disabled={deletingArticle}
+        disabled={deleting}
         onClick={() => onDeleteArticle(slug)}
       >
         Delete Article
       </button>
     </Fragment>
   );
-}
-
-async function onDeleteArticle(slug: string) {
-  store.dispatch(startDeletingArticle());
-  await deleteArticle(slug);
-  redirect('');
 }
 
 function CommentSection({

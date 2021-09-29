@@ -70,7 +70,14 @@ interface UpdateArticleAction {
   publicKey: string;
 }
 
-type ArticleAction = CreateArticleAction | UpdateArticleAction
+interface DeleteArticleAction {
+  type: "DeleteArticleAction";
+  slug: string;
+  signature: string;
+  publicKey: string;
+}
+
+type ArticleAction = CreateArticleAction | UpdateArticleAction | DeleteArticleAction
 
 export interface ArticleDB {
   slug: string;
@@ -84,7 +91,7 @@ export interface ArticleDB {
 
 interface ArticleResolve { slug?: string, errors?: GenericErrors }
 
-const articlesVersion = 17
+const articlesVersion = 20
 export const useArticlesDB = () => useRealtimeReducer<ArticleDB[] | null, ArticleAction, ArticleResolve>(`conduit-articles-${articlesVersion}`, (articles, action, resolve) => {
   let errors = {}
   let returnValue = articles
@@ -114,7 +121,12 @@ export const useArticlesDB = () => useRealtimeReducer<ArticleDB[] | null, Articl
           : article
       )
       updateArticleTags({slug, tagList: action.article.tagList})
-    } 
+    } else if (action.type === "DeleteArticleAction") {
+      if (articles.find(a => a.slug == action.slug).authorPublicKey === action.publicKey) {
+        returnValue = articles.filter(article => article.slug !== action.slug)
+      }
+      
+    }
   } else {
     errors['unauthorized'] = ['to edit article']
   }
@@ -178,7 +190,7 @@ function authorized(payload) {
 //<ArticleFavorite | null, ArticleFavoriteAction, GenericErrors> 
 export const useArticleFavorites = () => useRealtimeReducer2({
   name: `conduit-favorites-${articlesVersion}`,
-  initialState: { articles: {}, users: {}},
+  initialState: getRealtimeState(`conduit-favorites-${articlesVersion-1}`),
   loadingState: null,
   reducer: ({ articles, users }, action, resolve) => {
     if (!authorized(action)) { 

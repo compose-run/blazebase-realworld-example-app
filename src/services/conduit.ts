@@ -1,5 +1,5 @@
 import axios from 'axios';
-import { array, guard, object, string } from 'decoders';
+import { array, guard, object} from 'decoders';
 import settings from '../config/settings';
 import { Comment, commentDecoder } from '../types/comment';
 import { Profile, profileDecoder } from '../types/profile';
@@ -28,8 +28,4 @@ export async function deleteComment(slug: string, commentId: number): Promise<vo
 export async function createComment(slug: string, body: string): Promise<Comment> {
   const { data } = await axios.post(`articles/${slug}/comments`, { comment: { body } });
   return guard(object({ comment: commentDecoder }))(data).comment;
-}
-
-export async function deleteArticle(slug: string): Promise<void> {
-  await axios.delete(`articles/${slug}`);
 }
