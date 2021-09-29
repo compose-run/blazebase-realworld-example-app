@@ -1,24 +1,40 @@
-import { useEffect } from 'react';
+import { useState } from 'react';
 import { useLocation, useParams } from 'react-router-dom';
-import { followUser, unfollowUser } from '../../../services/conduit';
 import { store } from '../../../state/store';
-import { useStore } from '../../../state/storeHooks';
 import { redirect } from '../../../types/location';
 import { Profile } from '../../../types/profile';
-import { useProfiles, wrap } from '../../../types/user';
+import { useFollowers, useProfiles, useUser, wrap } from '../../../types/user';
 import { ArticlesViewer } from '../../ArticlesViewer/ArticlesViewer';
 import { changePage } from '../../ArticlesViewer/ArticlesViewer.slice';
 import { UserInfo } from '../../UserInfo/UserInfo';
-import { loadProfile, startSubmitting } from './ProfilePage.slice';
 
 export function ProfilePage() {
+  const user = useUser()
+  const [, emitFollowAction] = useFollowers();
+  const [submittingFollow, setSubmittingFollow] = useState(false)
+
   const { username } = useParams<{ username: string }>();
   const favorites = useLocation().pathname.endsWith('favorites');
 
   const profiles = useProfiles();
-  const profile = wrap(profiles.find(u => u.username === username))
+  const profile = wrap(profiles && profiles.find(u => u.username === username))
+
+  async function onFollowToggle(profile: Profile) {
+    if (user.isNone()) {
+      redirect('register');
+      return;
+    }
+
+    setSubmittingFollow(true)
   
-  const { submitting } = useStore(({ profile }) => profile);
+    await emitFollowAction({
+      type: profile.following ? "UnfollowAction" : "FollowAction",
+      follower: user.unwrap().publicKey,
+      leader: profile.publicKey
+    })
+
+    setSubmittingFollow(false)
+  }
 
   return (
     <div className='profile-page'>
@@ -31,8 +47,8 @@ export function ProfilePage() {
         some: (profile) => (
           <UserInfo
             user={profile}
-            disabled={submitting}
-            onFollowToggle={onFollowToggle(profile)}
+            disabled={submittingFollow}
+            onFollowToggle={() => onFollowToggle(profile)}
             onEditSettings={() => redirect('settings')}
           />
         ),
@@ -58,21 +74,6 @@ export function ProfilePage() {
 // TODO - put these filters into ArticlesViewer
   // const { currentPage } = store.getState().articleViewer;
   // return await getArticles({ [favorites ? 'favorited' : 'author']: username, offset: (currentPage - 1) * 10 });
-
-function onFollowToggle(profile: Profile): () => void {
-  return async () => {
-    const { user } = store.getState().app;
-    if (user.isNone()) {
-      redirect('register');
-      return;
-    }
-
-    store.dispatch(startSubmitting());
-
-    const newProfile = await (profile.following ? unfollowUser : followUser)(profile.username);
-    store.dispatch(loadProfile(newProfile));
-  };
-}
 
 function onTabChange(username: string): (page: string) => void {
   return async (page) => {

@@ -16,7 +16,7 @@ import {
   FieldValue
 } from "firebase/firestore";
 
-// Probably not really needed for now...
+// TODO - need a better recovery for when you accidentally overwrite the state
 // TODO - useOptimisticRealtimeReducer: optimistic updates (proccess stream events locally instead of server roundtrip; and then jumps to new server state if it's difference)
 // TODO - disallow "/" in names or encode it for people
 // TODO - catch all firebase errors
@@ -524,3 +524,6 @@ export function useRealtimeReducer<A, B, C>(
   ];
 }
 
+export function useRealtimeReducer2({name, initialState, reducer, loadingState }) {
+  return useRealtimeReducer(name, reducer, initialState, loadingState)
+}

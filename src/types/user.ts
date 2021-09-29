@@ -1,6 +1,6 @@
 import { Some, None, Option } from '@hqoss/monads';
 import { Decoder, nullable, object, string } from 'decoders';
-import { useRealtimeReducer } from '../services/compose';
+import { getRealtimeState, useRealtimeReducer, useRealtimeReducer2 } from '../services/compose';
 import { useStore } from '../state/storeHooks';
 import { GenericErrors } from './error';
 import { Profile } from './profile';
@@ -74,7 +74,27 @@ interface UpdateUserAction {
 
 type UserAction = SignUpUserAction | UpdateUserAction
 
-export const useUsers = () => useRealtimeReducer<User[], UserAction, GenericErrors>('conduit-users-13', (users, action, resolve) => {
+const users13 = [
+  {
+    "encryptedPrivateKey": "7asdasd8asdasd8asdasd1asdasd4asdasd3asdasd3asdasd1asdasd5asdasd9asdasd5asdasd5asdasd0asdasd3asdasd3asdasd9asdasd.asdasd0",
+    "publicKey": "0.13867700584931053",
+    "image": null,
+    "email": "steveykrouse@gmail.com",
+    "bio": null,
+    "username": "steve"
+  },
+  {
+    "email": "dave@gmail.com",
+    "publicKey": "0.6539307721101288",
+    "encryptedPrivateKey": "5asdasd7asdasd5asdasd2asdasd8asdasd8asdasd1asdasd7asdasd6asdasd5asdasd7asdasd6asdasd3asdasd9asdasd6asdasd.asdasd0",
+    "username": "dave",
+    "image": null,
+    "bio": null
+  }
+]
+
+const usersVersion = 15
+export const useUsers = () => useRealtimeReducer<User[], UserAction, GenericErrors>(`conduit-users-${usersVersion}`, (users, action, resolve) => {
   let errors = {}
   let returnValue = users
   if (action.type === "SIGN_UP") {
@@ -99,12 +119,37 @@ export const useUsers = () => useRealtimeReducer<User[], UserAction, GenericErro
   }
   resolve(errors)
   return returnValue
-}, [], [])
+}, users13, null)
 
 export const useProfiles = ():Profile[] => {
+  const user = useUser();
   const [ users ] = useUsers()
-  return users.map(user => ({...user, following: false})) // TODO
+  const [ followers ] = useFollowers()
+
+  return users && users.map(u => ({
+    ...u, 
+    following: user.isSome() && followers && !!(followers[user.unwrap().publicKey] || {})[u.publicKey]
+  }))
 }
+
+export const useFollowers = () => useRealtimeReducer2({
+  name: `conduit-followers-${usersVersion+3}`,
+  initialState: getRealtimeState(`conduit-followers-${usersVersion+2}`),
+  loadingState: null,
+  reducer: (userFollowers, action, resolve) => {
+    // TODO - authorization
+    const { follower, leader } = action
+    const following = action.type === "FollowAction"
+
+    return {
+      ...userFollowers,
+      [follower]: {
+        ...(userFollowers[follower] || {}),
+        [leader]: following
+      }
+    }
+  }
+})
 
 export interface KeyPair {
   publicKey: string;
@@ -127,6 +172,6 @@ export const useUser = () => {
   const { keypair } = useStore(({ app }) => app);
   
   return keypair.andThen(kp =>
-    wrap(users.find(user => user.publicKey === kp.publicKey))
+    wrap(users && users.find(user => user.publicKey === kp.publicKey))
   )
 }

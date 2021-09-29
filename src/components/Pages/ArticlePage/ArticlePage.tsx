@@ -5,9 +5,7 @@ import { Link, useParams } from 'react-router-dom';
 import {
   createComment,
   deleteComment,
-  followUser,
   getArticleComments,
-  unfollowUser,
 } from '../../../services/conduit';
 import { store } from '../../../state/store';
 import { useStore } from '../../../state/storeHooks';
@@ -15,14 +13,12 @@ import { Article, useArticleFavorites, useArticles, useArticlesDB } from '../../
 import { Comment } from '../../../types/comment';
 import { redirect } from '../../../types/location';
 import { classObjectToClassName } from '../../../types/style';
-import { sign, User, useUser } from '../../../types/user';
+import { sign, useFollowers, User, useUser } from '../../../types/user';
 import { TagList } from '../../ArticlePreview/ArticlePreview';
 import {
   CommentSectionState,
   loadComments,
   startSubmittingComment,
-  startSubmittingFollow,
-  updateAuthor,
   updateCommentBody,
 } from './ArticlePage.slice';
 
@@ -128,7 +124,7 @@ function NonOwnerArticleMetaActions({
     slug,
     favoritesCount,
     favorited,
-    author: { username, following },
+    author: { username, following, publicKey },
   }
 }: {
   article: Article;
@@ -139,6 +135,7 @@ function NonOwnerArticleMetaActions({
 
   const user = useUser()
   const [, emitFavoriteAction] = useArticleFavorites();
+  const [, emitFollowAction] = useFollowers();
 
   async function onFavorite() {
     if (user.isNone()) {
@@ -158,6 +155,23 @@ function NonOwnerArticleMetaActions({
     setSubmittingFavorite(false)
   }
 
+  async function onFollow() {
+    if (user.isNone()) {
+      redirect('register');
+      return;
+    }
+  
+    setSubmittingFollow(true)
+  
+    await emitFollowAction({
+      type: following ? "UnfollowAction" : "FollowAction",
+      follower: user.unwrap().publicKey,
+      leader: publicKey
+    })
+
+    setSubmittingFollow(false)
+  }
+
   return (
     <Fragment>
       <button
@@ -168,7 +182,7 @@ function NonOwnerArticleMetaActions({
           'btn-secondary': following,
         })}
         disabled={submittingFollow}
-        onClick={() => onFollow(username, following)}
+        onClick={onFollow}
       >
         <i className='ion-plus-round'></i>
         &nbsp; {(following ? 'Unfollow ' : 'Follow ') + username}
@@ -192,19 +206,6 @@ function NonOwnerArticleMetaActions({
   );
 }
 
-async function onFollow(username: string, following: boolean) {
-  if (store.getState().app.user.isNone()) {
-    redirect('register');
-    return;
-  }
-
-  store.dispatch(startSubmittingFollow());
-
-  const author = await (following ? unfollowUser : followUser)(username);
-  store.dispatch(updateAuthor(author));
-}
-
-
 function OwnerArticleMetaActions({
   article: { slug }
 }: {
@@ -215,7 +216,7 @@ function OwnerArticleMetaActions({
   const { keypair } = useStore(({ app }) => app);
   const [, emitArticleAction] = useArticlesDB()
 
-  async function onDeleteArticle(slug: string) {
+  async function onDeleteArticle() {
     if (keypair.isNone()) { redirect(''); return; }
 
     setDeleting(true)
@@ -236,7 +237,7 @@ function OwnerArticleMetaActions({
       <button
         className='btn btn-outline-danger btn-sm'
         disabled={deleting}
-        onClick={() => onDeleteArticle(slug)}
+        onClick={onDeleteArticle}
       >
         Delete Article
       </button>

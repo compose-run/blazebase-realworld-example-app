@@ -1,6 +1,6 @@
 import produce from 'immer'
 import { array, boolean, Decoder, iso8601, number, object, string } from 'decoders';
-import { emitWithResponse, getRealtimeState, useRealtimeReducer } from '../services/compose';
+import { emitWithResponse, getRealtimeState, useRealtimeReducer, useRealtimeReducer2 } from '../services/compose';
 import { GenericErrors } from './error';
 import { Profile, profileDecoder } from './profile';
 import { signed, useProfiles, useUser } from './user';
@@ -178,11 +178,6 @@ function updateArticleTags(payload: {slug: string, tagList: string[]}) {
   return emitWithResponse(articleTagsDbId, {...payload, type: "UpdateArticleTags"})
 }
 
-
-function useRealtimeReducer2({name, initialState, reducer, loadingState }) {
-  return useRealtimeReducer(name, reducer, initialState, loadingState)
-}
-
 function authorized(payload) {
   return (payload.token === "TODO")
 }
@@ -242,14 +237,3 @@ export const useArticles = ():Article[] => {
 
   return articles
 }
-
-/*
-
-user has many to many users (followers)
-
-articles have many to many users (likes)
-
-articles have many comments
-
-
-*/
