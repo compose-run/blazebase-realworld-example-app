@@ -1,20 +1,18 @@
 import { Option } from '@hqoss/monads';
 import { format } from 'date-fns';
-import React, { Fragment, useEffect } from 'react';
+import React, { Fragment, useEffect, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import {
   createComment,
   deleteArticle,
   deleteComment,
-  favoriteArticle,
   followUser,
   getArticleComments,
-  unfavoriteArticle,
   unfollowUser,
 } from '../../../services/conduit';
 import { store } from '../../../state/store';
 import { useStore } from '../../../state/storeHooks';
-import { Article, useArticles, useArticleTags } from '../../../types/article';
+import { Article, useArticleFavorites, useArticles, useArticleTags } from '../../../types/article';
 import { Comment } from '../../../types/comment';
 import { redirect } from '../../../types/location';
 import { classObjectToClassName } from '../../../types/style';
@@ -143,14 +141,35 @@ function NonOwnerArticleMetaActions({
     favoritesCount,
     favorited,
     author: { username, following },
-  },
-  submittingFavorite,
-  submittingFollow,
+  }
 }: {
   article: Article;
-  submittingFavorite: boolean;
-  submittingFollow: boolean;
 }) {
+  // TODO - better pattern for loading state?
+  const [submittingFavorite, setSubmittingFavorite] = useState(false)
+  const [submittingFollow, setSubmittingFollow] = useState(false)
+
+  const user = useUser()
+  const [, emitFavoriteAction] = useArticleFavorites();
+
+  async function onFavorite() {
+    if (user.isNone()) {
+      redirect('register');
+      return;
+    }
+  
+    setSubmittingFavorite(true)
+
+    await emitFavoriteAction({
+      type: favorited ? "UnfavoriteAction" : "FavoriteAction",
+      slug,
+      userId: user.unwrap().publicKey,
+      token: "TODO"
+    })
+    
+    setSubmittingFavorite(false)
+  }
+
   return (
     <Fragment>
       <button
@@ -175,7 +194,7 @@ function NonOwnerArticleMetaActions({
           'btn-primary': favorited,
         })}
         disabled={submittingFavorite}
-        onClick={() => onFavorite(slug, favorited)}
+        onClick={onFavorite}
       >
         <i className='ion-heart'></i>
         &nbsp; {(favorited ? 'Unfavorite ' : 'Favorite ') + 'Article'}
@@ -197,17 +216,6 @@ async function onFollow(username: string, following: boolean) {
   store.dispatch(updateAuthor(author));
 }
 
-async function onFavorite(slug: string, favorited: boolean) {
-  if (store.getState().app.user.isNone()) {
-    redirect('register');
-    return;
-  }
-
-  store.dispatch(startSubmittingFavorite());
-
-  const article = await (favorited ? unfavoriteArticle : favoriteArticle)(slug);
-  store.dispatch(loadArticle(article));
-}
 
 function OwnerArticleMetaActions({
   article: { slug },
@@ -219,7 +227,6 @@ function OwnerArticleMetaActions({
   return (
     <Fragment>
       <button className='btn btn-outline-secondary btn-sm' onClick={() => redirect(`editor/${slug}`)}>
-        <i className='ion-plus-round'></i>
         &nbsp; Edit Article
       </button>
       &nbsp;
@@ -228,8 +235,7 @@ function OwnerArticleMetaActions({
         disabled={deletingArticle}
         onClick={() => onDeleteArticle(slug)}
       >
-        <i className='ion-heart'></i>
-        &nbsp; Delete Article
+        Delete Article
       </button>
     </Fragment>
   );

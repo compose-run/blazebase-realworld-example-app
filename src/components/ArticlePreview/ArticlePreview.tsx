@@ -1,6 +1,8 @@
 import { format } from 'date-fns';
+import { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Article } from '../../types/article';
+import { Article, useArticleFavorites, useArticlesDB } from '../../types/article';
+import { useUser } from '../../types/user';
 
 export function ArticlePreview({
   article: {
@@ -12,14 +14,30 @@ export function ArticlePreview({
     description,
     tagList,
     author: { image, username },
-  },
-  isSubmitting,
-  onFavoriteToggle,
-}: {
+  }}: {
   article: Article;
-  isSubmitting: boolean;
-  onFavoriteToggle?: () => void;
 }) {
+  const user = useUser()
+  const [isSubmitting, setSubmitting] = useState(false) 
+
+  // todo ensure that we get one instance of this func and re-use it everywhere
+  const [, emitFavoriteAction] = useArticleFavorites()
+
+  async function onFavoriteToggle() {
+    if (user.isNone()) return
+
+    setSubmitting(true)
+
+    await emitFavoriteAction({
+      type: favorited ? "UnfavoriteAction" : "FavoriteAction",
+      slug,
+      userId: user.unwrap().publicKey,
+      token: "TODO"
+    })
+
+    setSubmitting(false)
+  }
+
   return (
     <div className='article-preview'>
       <div className='article-meta'>

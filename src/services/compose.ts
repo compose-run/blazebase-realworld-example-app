@@ -17,11 +17,14 @@ import {
 } from "firebase/firestore";
 
 // Probably not really needed for now...
-// TODO - optimistic updates (proccess stream events locally)
+// TODO - useOptimisticRealtimeReducer: optimistic updates (proccess stream events locally instead of server roundtrip; and then jumps to new server state if it's difference)
 // TODO - disallow "/" in names or encode it for people
 // TODO - catch all firebase errors
-// TODO - garbage collect localstorage cache
+// TODO - garbage collect localstorage cache (and firebase cache)
 // TODO - ensure that we only pull one namespace globally so we don't double subscribe and proccess things (maybe via wrapping in memoize?)
+// TODO - minify reducer before caching to ignore comments and whitespace etc https://www.npmjs.com/package/uglify-js
+// TODO - allow key-based lookup when not the whole object is needed
+// TODO - allow full range of firebase querying for reduced state
 
 const firebaseConfig = {
   apiKey: "AIzaSyDZtMhc933h53_fbJFmyM76Mh6aRreHZE8",
@@ -251,6 +254,18 @@ type RealtimeReducerContext<a, b> =
   | SetFromInitialValue<a>
   | SetFromCacheOrReduction<a>;
 
+function getResolver(eventId) {
+  const resolver = window.composeResolvers[eventId]
+  if (resolver) {
+    return (...args) => {
+      delete window.composeResolvers[eventId]
+      return resolver(...args)
+    }
+  } else {
+    return () => void(0)
+  }
+}
+
 function realtimeReducer<a, b>(
   name: string,
   reducer: (acc: a, curr: b, resolver? : (c: any) => void) => a,
@@ -370,8 +385,8 @@ function realtimeReducer<a, b>(
     }
   } else if (context.kind === "SetFromInitialValue") {
     if (event.kind === "ReductionEvent") {
-      const currentValue = reducer(context.currentValue, event.value, window.composeResolvers[event.id] || (() => void(0)))
-      delete window.composeResolvers[event.id]
+      const currentValue = reducer(context.currentValue, event.value, getResolver(event.id))
+      getResolver(event.id)() // delete & resolve if not done in reducer
       cacheBehaviorLocalStorage(name, currentValue, event.ts);
       emit("behaviors", name, currentValue, event.ts);
       return {
@@ -385,8 +400,8 @@ function realtimeReducer<a, b>(
   } else if (context.kind === "SetFromCacheOrReduction") {
     if (event.kind === "ReductionEvent") {
       if (event.ts.toMillis() > context.ts.toMillis()) {
-        const currentValue = reducer(context.currentValue, event.value, window.composeResolvers[event.id] || (() => void(0)))
-        delete window.composeResolvers[event.id]
+        const currentValue = reducer(context.currentValue, event.value, getResolver(event.id))
+        getResolver(event.id)() // delete & resolve if not done in reducer
         cacheBehaviorLocalStorage(name, currentValue, event.ts);
         emit("behaviors", name, currentValue, event.ts);
         return {
@@ -509,4 +524,3 @@ export function useRealtimeReducer<A, B, C>(
   ];
 }
 
-// TODO - useOptimisticRealtimeReducer which doesn't wait for server roundtrip of emitted event to reduce that event

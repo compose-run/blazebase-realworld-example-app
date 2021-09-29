@@ -1,13 +1,10 @@
 import { Fragment } from 'react';
-import { favoriteArticle, unfavoriteArticle } from '../../services/conduit';
-import { store } from '../../state/store';
 import { useStore } from '../../state/storeHooks';
-import { Article, useArticles } from '../../types/article';
+import { useArticles } from '../../types/article';
 import { classObjectToClassName } from '../../types/style';
 import { wrap } from '../../types/user';
 import { ArticlePreview } from '../ArticlePreview/ArticlePreview';
 import { Pagination } from '../Pagination/Pagination';
-import { ArticleViewerState, endSubmittingFavorite, startSubmittingFavorite } from './ArticlesViewer.slice';
 
 export function ArticlesViewer({
   toggleClassName,
@@ -96,24 +93,9 @@ function ArticleList({ articles }: { articles  }) { // articles: ArticleViewerSt
           <ArticlePreview
             key={article.slug}
             article={article}
-            isSubmitting={false} // TODO
-            onFavoriteToggle={undefined} // TODO: {isSubmitting ? undefined : onFavoriteToggle(index, article)}
           />
         ))}
       </Fragment>
     ),
   });
-}
-
-function onFavoriteToggle(index: number, { slug, favorited }: Article) {
-  return async () => {
-    if (store.getState().app.user.isNone()) {
-      location.hash = '#/login';
-      return;
-    }
-    store.dispatch(startSubmittingFavorite(index));
-
-    const article = await (favorited ? unfavoriteArticle(slug) : favoriteArticle(slug));
-    store.dispatch(endSubmittingFavorite({ index, article }));
-  };
 }

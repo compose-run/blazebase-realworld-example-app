@@ -1,9 +1,9 @@
-import { None, Some, Option } from '@hqoss/monads';
+import produce from 'immer'
 import { array, boolean, Decoder, iso8601, number, object, string } from 'decoders';
 import { emitWithResponse, getRealtimeState, useRealtimeReducer } from '../services/compose';
 import { GenericErrors } from './error';
 import { Profile, profileDecoder } from './profile';
-import { signed, useProfiles, useUsers } from './user';
+import { signed, useProfiles, useUser } from './user';
 
 export interface Article {
   slug: string;
@@ -84,7 +84,7 @@ export interface ArticleDB {
 
 interface ArticleResolve { slug?: string, errors?: GenericErrors }
 
-const articlesVersion = 16
+const articlesVersion = 17
 export const useArticlesDB = () => useRealtimeReducer<ArticleDB[] | null, ArticleAction, ArticleResolve>(`conduit-articles-${articlesVersion}`, (articles, action, resolve) => {
   let errors = {}
   let returnValue = articles
@@ -166,12 +166,56 @@ function updateArticleTags(payload: {slug: string, tagList: string[]}) {
   return emitWithResponse(articleTagsDbId, {...payload, type: "UpdateArticleTags"})
 }
 
+
+function useRealtimeReducer2({name, initialState, reducer, loadingState }) {
+  return useRealtimeReducer(name, reducer, initialState, loadingState)
+}
+
+function authorized(payload) {
+  return (payload.token === "TODO")
+}
+
+//<ArticleFavorite | null, ArticleFavoriteAction, GenericErrors> 
+export const useArticleFavorites = () => useRealtimeReducer2({
+  name: `conduit-favorites-${articlesVersion}`,
+  initialState: { articles: {}, users: {}},
+  loadingState: null,
+  reducer: ({ articles, users }, action, resolve) => {
+    if (!authorized(action)) { 
+      resolve({errors: {'unauthorized': 'to perform this action'}})
+      return { articles, users } 
+    }
+    
+    const { slug, userId } = action
+    const favorite = action.type === "FavoriteAction"
+
+    return {
+      articles: {
+        ...articles,
+        [slug]: {
+          ...(articles[slug] || {}),
+          [userId]: favorite
+        }
+      },
+      users: {
+        ...users,
+        [userId]: {
+          ...(users[userId] || {}),
+          [slug]: favorite
+        }
+      }
+    }
+  }
+})
+
 export const useArticles = ():Article[] => {
+  const user = useUser()
   const [articlesDB] = useArticlesDB();
   const [articleTags] = useArticleTags()
+  const [articleFavorites] = useArticleFavorites()
   const authors = useProfiles();
 
-  const articles = articlesDB && articleTags && authors && articlesDB.map(articleDB => ({
+  const articles = articlesDB && articleTags && authors && articleFavorites && articlesDB.map(articleDB => ({
     slug: articleDB.slug,
     title: articleDB.title,
     description: articleDB.description,
@@ -179,8 +223,8 @@ export const useArticles = ():Article[] => {
     tagList: articleTags.filter(articleTag => articleTag.slug === articleDB.slug).map(({tag}) => tag),
     createdAt: new Date(articleDB.createdAt),
     updatedAt: new Date(articleDB.updatedAt),
-    favorited: false, // TODO
-    favoritesCount: 0, // TODO
+    favorited: user.isSome() && articleFavorites.articles[articleDB.slug] && articleFavorites.articles[articleDB.slug][user.unwrap().publicKey],
+    favoritesCount: Object.values(articleFavorites.articles[articleDB.slug] || {}).filter(favorite => favorite).length,
     author: authors.find(u => u.publicKey === articleDB.authorPublicKey),
   }))
 
