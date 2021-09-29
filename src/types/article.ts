@@ -1,8 +1,6 @@
-import produce from 'immer'
-import { array, boolean, Decoder, iso8601, number, object, string } from 'decoders';
 import { emitWithResponse, getRealtimeState, useRealtimeReducer, useRealtimeReducer2 } from '../services/compose';
 import { GenericErrors } from './error';
-import { Profile, profileDecoder } from './profile';
+import { Profile } from './profile';
 import { signed, useProfiles, useUser } from './user';
 
 export interface Article {
@@ -18,18 +16,6 @@ export interface Article {
   author: Profile;
 }
 
-export const articleDecoder: Decoder<Article> = object({
-  slug: string,
-  title: string,
-  description: string,
-  body: string,
-  tagList: array(string),
-  createdAt: iso8601,
-  updatedAt: iso8601,
-  favorited: boolean,
-  favoritesCount: number,
-  author: profileDecoder,
-});
 
 export interface MultipleArticles {
   articles: Article[];
