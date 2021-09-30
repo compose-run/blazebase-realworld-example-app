@@ -168,7 +168,7 @@ export const setKeyPair = keypair => localStorage.setItem("keypair", JSON.string
 
 export const useUser = () => {
   const [users] = useUsers()
-  const { keypair } = useStore(({ app }) => app);
+  const keypair = getKeyPair()
   
   return keypair.andThen(kp =>
     wrap(users && users.find(user => user.publicKey === kp.publicKey))

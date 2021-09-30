@@ -1,9 +1,8 @@
 import React from 'react';
 import { store } from '../../../state/store';
 import { useStore } from '../../../state/storeHooks';
-import { sign, UserSettings, useUsers } from '../../../types/user';
+import { getKeyPair, sign, UserSettings, useUsers } from '../../../types/user';
 import { buildGenericFormField } from '../../../types/genericFormField';
-import { logout } from '../../App/App.slice';
 import { GenericForm } from '../../GenericForm/GenericForm';
 import { SettingsState, startUpdate, updateErrors, updateField } from './Settings.slice';
 import { ContainerPage } from '../../ContainerPage/ContainerPage';
@@ -18,7 +17,7 @@ export interface SettingsField {
 export function Settings() {
   const { user, errors, updating } = useStore(({ settings }) => settings);
 
-  const { keypair } = useStore(({ app }) => app);
+  const keypair = getKeyPair()  
   const [, emitUserAction] = useUsers()
 
   function onUpdateSettings(user: UserSettings) {

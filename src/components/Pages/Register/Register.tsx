@@ -3,9 +3,8 @@ import { useStoreWithInitializer } from '../../../state/storeHooks';
 import { buildGenericFormField } from '../../../types/genericFormField';
 import { GenericForm } from '../../GenericForm/GenericForm';
 import { initializeRegister, RegisterState, startSigningUp, updateErrors, updateField } from './Register.slice';
-import { newKeypair, UserForRegistration, useUsers, encryptPrivateKeyWithPassword } from '../../../types/user';
+import { newKeypair, UserForRegistration, useUsers, encryptPrivateKeyWithPassword, setKeyPair } from '../../../types/user';
 import { ContainerPage } from '../../ContainerPage/ContainerPage';
-import { loadKeyPair } from '../../App/App.slice';
 
 export function Register() {
   const { errors, signingUp, user } = useStoreWithInitializer(
@@ -37,7 +36,7 @@ export function Register() {
       if (Object.keys(errors).length) {
         store.dispatch(updateErrors(errors))
       } else {
-        store.dispatch(loadKeyPair(keypair))
+        setKeyPair(keypair)
         location.hash = '#/';
       }
       

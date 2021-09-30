@@ -1,9 +1,7 @@
 import React, { useState } from 'react';
-import { decryptPrivateKeyWithPassword, useUsers } from '../../../types/user';
+import { decryptPrivateKeyWithPassword, setKeyPair, useUsers } from '../../../types/user';
 import { buildGenericFormField } from '../../../types/genericFormField';
 import { GenericForm } from '../../GenericForm/GenericForm';
-import { loadKeyPair } from '../../App/App.slice';
-import { store } from '../../../state/store';
 import { ContainerPage } from '../../ContainerPage/ContainerPage';
 
 export function Login() {
@@ -28,7 +26,7 @@ export function Login() {
 
     try {
       const privateKey = decryptPrivateKeyWithPassword(user.encryptedPrivateKey, password)
-      store.dispatch(loadKeyPair({privateKey, publicKey: user.publicKey}))
+      setKeyPair({privateKey, publicKey: user.publicKey})
       location.hash = '#/';
     } catch {
       // AUTHORIZATION

@@ -18,11 +18,8 @@ import {
 
 
 /*
-Remove redux
-get rid of some types
-
+Remove store.ts
 Cleanup auth & add firebase auth (and permissions on firebase)
-
 
 Comment code compose.ts file
 Make a proper open source repo for firebase wrapper with a proper name

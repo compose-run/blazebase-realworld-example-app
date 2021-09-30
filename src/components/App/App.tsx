@@ -1,4 +1,4 @@
-import { Fragment, useEffect } from 'react';
+import { Fragment } from 'react';
 import { HashRouter, Redirect, Route, RouteProps, Switch } from 'react-router-dom';
 import { EditArticle } from '../Pages/EditArticle/EditArticle';
 import { Footer } from '../Footer/Footer';
@@ -10,18 +10,11 @@ import { Register } from '../Pages/Register/Register';
 import { Settings } from '../Pages/Settings/Settings';
 import { ProfilePage } from '../Pages/ProfilePage/ProfilePage';
 import { ArticlePage } from '../Pages/ArticlePage/ArticlePage';
-import { useStore } from '../../state/storeHooks';
-import { store } from '../../state/store';
-import { loadKeyPair } from './App.slice';
 import { getKeyPair } from '../../types/user';
-import { Some } from '@hqoss/monads';
 
 
 export function App() {
-  const { keypair } = useStore(({ app }) => app);
-  useEffect(() => void(getKeyPair().andThen(kp => Some(store.dispatch(loadKeyPair(kp))))), [])
-
-  const userIsLogged = keypair.isSome()
+  const userIsLogged = getKeyPair().isSome()
 
   return (
     <HashRouter>
