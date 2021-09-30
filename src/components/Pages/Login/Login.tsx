@@ -1,37 +1,46 @@
-import React from 'react';
-import { dispatchOnCall, store } from '../../../state/store';
-import { useStoreWithInitializer } from '../../../state/storeHooks';
+import React, { useState } from 'react';
 import { decryptPrivateKeyWithPassword, useUsers } from '../../../types/user';
 import { buildGenericFormField } from '../../../types/genericFormField';
 import { GenericForm } from '../../GenericForm/GenericForm';
-import { initializeLogin, LoginState, startLoginIn, updateErrors, updateField } from './Login.slice';
-import { ContainerPage } from '../../ContainerPage/ContainerPage';
 import { loadKeyPair } from '../../App/App.slice';
+import { store } from '../../../state/store';
+import { ContainerPage } from '../../ContainerPage/ContainerPage';
 
 export function Login() {
-  const { errors, loginIn, credentials } = useStoreWithInitializer(({ login }) => login, dispatchOnCall(initializeLogin()));
+  const [ users ] = useUsers()
 
-  const [users] = useUsers()
+  const [ loggingIn, setLoggingIn ] = useState(false)
+  const [ email, setEmail ] = useState('')
+  const [ password, setPassword ] = useState('')
+  const [ errors, setErrors ] = useState({})
 
   function signIn(ev: React.FormEvent) {
     ev.preventDefault();
   
-    if (store.getState().login.loginIn) return;
-    store.dispatch(startLoginIn());
+    setLoggingIn(true)
   
-    const user = users.find(u => u.email === credentials.email)
+    const user = users.find(u => u.email === email)
     if (!user) {
-      store.dispatch(updateErrors({"email": ["not found"]}))
+      setErrors({"email": ["not found"]})
+      setLoggingIn(false)
       return 
     }
 
     try {
-      const privateKey = decryptPrivateKeyWithPassword(user.encryptedPrivateKey, credentials.password)
+      const privateKey = decryptPrivateKeyWithPassword(user.encryptedPrivateKey, password)
       store.dispatch(loadKeyPair({privateKey, publicKey: user.publicKey}))
       location.hash = '#/';
     } catch {
       // AUTHORIZATION
       // store.dispatch(updateErrors({"password": ["is incorrect"]}))
+    }
+  }
+
+  function onUpdateField(name: string, value: string) {
+    if (name === "email") {
+      setEmail(value)
+    } else if (name === "password") {
+      setPassword(value)
     }
   }
 
@@ -45,8 +54,8 @@ export function Login() {
           </p>
 
           <GenericForm
-            disabled={loginIn}
-            formObject={credentials}
+            disabled={loggingIn}
+            formObject={{email, password}}
             submitButtonText='Sign in'
             errors={errors}
             onChange={onUpdateField}
@@ -60,8 +69,4 @@ export function Login() {
       </ContainerPage>
     </div>
   );
-}
-
-function onUpdateField(name: string, value: string) {
-  store.dispatch(updateField({ name: name as keyof LoginState['credentials'], value }));
 }

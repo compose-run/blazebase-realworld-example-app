@@ -46,6 +46,8 @@ interface CreateArticleAction {
   article: ArticleForEditor;
   publicKey: string;
   signature: string;
+  slug: string;
+  createdAt: number;
 }
 
 interface UpdateArticleAction {
@@ -54,6 +56,7 @@ interface UpdateArticleAction {
   slug: string;
   signature: string;
   publicKey: string;
+  updatedAt: number;
 }
 
 interface DeleteArticleAction {
@@ -77,36 +80,35 @@ export interface ArticleDB {
 
 interface ArticleResolve { slug?: string, errors?: GenericErrors }
 
-const articlesVersion = 21
+const articlesVersion = 31
 export const useArticlesDB = () => useRealtimeReducer<ArticleDB[] | null, ArticleAction, ArticleResolve>(`conduit-articles-${articlesVersion}`, (articles, action, resolve) => {
   let errors = {}
   let returnValue = articles
-  let slug = 'slug' in action ? action.slug : Math.random().toString() // TODO This either needs to happen client side or be deterministic
   if (signed(action)) {
     if (action.type === "CreateArticleAction") {
       returnValue = articles.concat([{
-        slug, 
+        slug: action.slug, 
         title: action.article.title,
         description: action.article.description,
         body: action.article.body,
-        createdAt: Date.now(), // TODO - get server time or just generate on client
-        updatedAt: Date.now(), // TODO - get server time or just generate on client
+        createdAt: action.createdAt,
+        updatedAt: action.createdAt,
         authorPublicKey: action.publicKey
       }])
-      updateArticleTags({slug, tagList: action.article.tagList})
+      updateArticleTags({slug: action.slug, tagList: action.article.tagList})
     } else if (action.type === "UpdateArticleAction") {
       returnValue = articles.map(article => 
-        article.slug == slug && article.authorPublicKey === action.publicKey 
+        article.slug == action.slug && article.authorPublicKey === action.publicKey 
           ? {
               ...article,
               title: action.article.title,
               description: action.article.description,
               body: action.article.body,
-              updatedAt: Date.now(), // TODO - get server time or just generate on client
+              updatedAt: action.updatedAt
             } 
           : article
       )
-      updateArticleTags({slug, tagList: action.article.tagList})
+      updateArticleTags({slug: action.slug, tagList: action.article.tagList})
     } else if (action.type === "DeleteArticleAction") {
       if (articles.find(a => a.slug == action.slug).authorPublicKey === action.publicKey) {
         returnValue = articles.filter(article => article.slug !== action.slug)
@@ -119,11 +121,11 @@ export const useArticlesDB = () => useRealtimeReducer<ArticleDB[] | null, Articl
   if (Object.keys(errors).length) {
     resolve({errors})
   } else {
-    resolve({slug})
+    resolve({slug: action.slug})
   }
   
   return returnValue
-}, getRealtimeState(`conduit-articles-${articlesVersion-1}`), null)
+}, getRealtimeState(`conduit-articles-${articlesVersion-1}`).then(articles => articles && articles.filter(({createdAt}) => typeof createdAt !== "string")), null)
 
 
 interface ArticleTag {
@@ -223,11 +225,10 @@ export const useArticles = ():Article[] => {
 
   return articles
 }
-
-const commentsVersion = articlesVersion + 8
+const commentsVersion = articlesVersion + 10
 export const useArticleCommentsDB = () => useRealtimeReducer2({
   name: `conduit-comments-${commentsVersion}`,
-  initialState: getRealtimeState(`conduit-comments-${commentsVersion}`).then(s => s || {}),
+  initialState: getRealtimeState(`conduit-comments-${articlesVersion-1}`).then(s => s || {}),
   loadingState: null,
   reducer: (comments, action, resolve) => {
     // TODO AUTHORIZATION

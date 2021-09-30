@@ -21,7 +21,9 @@ export function NewArticle() {
     const {errors, slug} = await emitArticleAction(sign(keypair.unwrap().privateKey, {
       type: "CreateArticleAction",
       article: store.getState().editor.article,
-      publicKey: keypair.unwrap().publicKey
+      publicKey: keypair.unwrap().publicKey,
+      createdAt: Date.now(),
+      slug: Math.random().toString()
     }))
 
     if (errors) {

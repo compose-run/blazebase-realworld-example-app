@@ -1,7 +1,7 @@
 import { store } from '../../../state/store';
 import { useStoreWithInitializer } from '../../../state/storeHooks';
 import { useTags } from '../../../types/article';
-import { getKeyPair, useUser, wrap } from '../../../types/user';
+import { getKeyPair, wrap } from '../../../types/user';
 import { ArticlesViewer } from '../../ArticlesViewer/ArticlesViewer';
 import { changePage } from '../../ArticlesViewer/ArticlesViewer.slice';
 import { ContainerPage } from '../../ContainerPage/ContainerPage';
@@ -49,9 +49,7 @@ function renderBanner() {
 }
 
 function buildTabsNames(selectedTab: string) {
-  const user = useUser();
-
-  return Array.from(new Set([...(user.isSome() ? ['Your Feed'] : []), 'Global Feed', selectedTab]));
+  return Array.from(new Set([...(getKeyPair().isSome() ? ['Your Feed'] : []), 'Global Feed']));
 }
 
 async function onPageChange(index: number) {

@@ -6,8 +6,8 @@ import { ContainerPage } from '../ContainerPage/ContainerPage';
 import { GenericForm } from '../GenericForm/GenericForm';
 import { addTag, EditorState, removeTag, updateField } from './ArticleEditor.slice';
 
-export function ArticleEditor({ onSubmit }: { onSubmit: (ev: React.FormEvent) => void }) {
-  const { article, submitting, tag, errors } = useStore(({ editor }) => editor);
+export function ArticleEditor({ onSubmit, submitting }: { onSubmit: (ev: React.FormEvent) => void, submitting: boolean }) {
+  const { article, tag, errors } = useStore(({ editor }) => editor);
 
   return (
     <div className='editor-page'>
