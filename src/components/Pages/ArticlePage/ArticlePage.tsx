@@ -2,14 +2,9 @@ import { Option } from '@hqoss/monads';
 import { format } from 'date-fns';
 import React, { Fragment, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
-import {
-  createComment,
-  deleteComment,
-  getArticleComments,
-} from '../../../services/conduit';
 import { store } from '../../../state/store';
 import { useStore } from '../../../state/storeHooks';
-import { Article, useArticleFavorites, useArticles, useArticlesDB } from '../../../types/article';
+import { Article, useArticleComments, useArticleCommentsDB, useArticleFavorites, useArticles, useArticlesDB } from '../../../types/article';
 import { Comment } from '../../../types/comment';
 import { redirect } from '../../../types/location';
 import { classObjectToClassName } from '../../../types/style';
@@ -17,8 +12,6 @@ import { sign, useFollowers, User, useUser } from '../../../types/user';
 import { TagList } from '../../ArticlePreview/ArticlePreview';
 import {
   CommentSectionState,
-  loadComments,
-  startSubmittingComment,
   updateCommentBody,
 } from './ArticlePage.slice';
 
@@ -247,12 +240,13 @@ function OwnerArticleMetaActions({
 
 function CommentSection({
   article,
-  commentSection: { submittingComment, commentBody, comments },
+  commentSection: { commentBody },
 }: {
   article: Article;
   commentSection: CommentSectionState;
 }) {
   const user = useUser();
+  const comments = useArticleComments()
   
   return (
     <div className='row'>
@@ -267,40 +261,58 @@ function CommentSection({
             <CommentForm
               user={user}
               slug={article.slug}
-              submittingComment={submittingComment}
               commentBody={commentBody}
             />
           ),
         })}
 
-        {comments.match({
-          none: () => <div>Loading comments...</div>,
-          some: (comments) => (
-            <Fragment>
-              {comments.map((comment, index) => (
+        {comments 
+          ? <Fragment>
+              {(comments[article.slug] || []).map((comment, index) => (
                 <ArticleComment key={comment.id} comment={comment} slug={article.slug} user={user} index={index} />
               ))}
-            </Fragment>
-          ),
-        })}
+            </Fragment> 
+          : <div>Loading comments...</div>
+         }
       </div>
     </div>
   );
 }
 
 function CommentForm({
-  user: { image },
+  user: { image, publicKey },
   commentBody,
   slug,
-  submittingComment,
 }: {
   user: User;
   commentBody: string;
   slug: string;
-  submittingComment: boolean;
 }) {
+
+  const [submittingComment, setSubmitting] = useState(false)
+  const [ , emitCommentAction] = useArticleCommentsDB()
+  
+
+  async function onPostComment(ev) {
+    ev.preventDefault();
+
+    setSubmitting(true)
+
+    await emitCommentAction({
+      type: "CreateComment",
+      userId: publicKey,
+      body: commentBody,
+      slug,
+      commentId: Math.random(),
+      createdAt: Date.now()
+    })
+    
+    store.dispatch(updateCommentBody(""))
+    setSubmitting(false)
+  }
+
   return (
-    <form className='card comment-form' onSubmit={onPostComment(slug, commentBody)}>
+    <form className='card comment-form' onSubmit={onPostComment}>
       <div className='card-block'>
         <textarea
           className='form-control'
@@ -324,23 +336,12 @@ function onCommentChange(ev: React.ChangeEvent<HTMLTextAreaElement>) {
   store.dispatch(updateCommentBody(ev.target.value));
 }
 
-function onPostComment(slug: string, body: string): (ev: React.FormEvent) => void {
-  return async (ev) => {
-    ev.preventDefault();
-
-    store.dispatch(startSubmittingComment());
-    await createComment(slug, body);
-
-    store.dispatch(loadComments(await getArticleComments(slug)));
-  };
-}
-
 function ArticleComment({
   comment: {
-    id,
+    commentId,
     body,
     createdAt,
-    author: { username, image },
+    author,
   },
   slug,
   index,
@@ -351,6 +352,11 @@ function ArticleComment({
   index: number;
   user: Option<User>;
 }) {
+
+  const { username, image } = author || {}
+
+  const [ , emitCommentAction] = useArticleCommentsDB()
+
   return (
     <div className='card'>
       <div className='card-block'>
@@ -370,16 +376,16 @@ function ArticleComment({
             <i
               className='ion-trash-a'
               aria-label={`Delete comment ${index + 1}`}
-              onClick={() => onDeleteComment(slug, id)}
+              onClick={() => emitCommentAction({
+                slug, 
+                commentId,
+                userId: user.unwrap().publicKey,
+                type: "DeleteComment"
+              })}
             ></i>
           </span>
         )}
       </div>
     </div>
   );
-}
-
-async function onDeleteComment(slug: string, id: number) {
-  await deleteComment(slug, id);
-  store.dispatch(loadComments(await getArticleComments(slug)));
 }

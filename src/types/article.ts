@@ -1,7 +1,7 @@
 import { emitWithResponse, getRealtimeState, useRealtimeReducer, useRealtimeReducer2 } from '../services/compose';
 import { GenericErrors } from './error';
 import { Profile } from './profile';
-import { signed, useProfiles, useUser } from './user';
+import { signed, useProfiles, useUser, useUsers } from './user';
 
 export interface Article {
   slug: string;
@@ -77,7 +77,7 @@ export interface ArticleDB {
 
 interface ArticleResolve { slug?: string, errors?: GenericErrors }
 
-const articlesVersion = 20
+const articlesVersion = 21
 export const useArticlesDB = () => useRealtimeReducer<ArticleDB[] | null, ArticleAction, ArticleResolve>(`conduit-articles-${articlesVersion}`, (articles, action, resolve) => {
   let errors = {}
   let returnValue = articles
@@ -222,4 +222,62 @@ export const useArticles = ():Article[] => {
   }))
 
   return articles
+}
+
+const commentsVersion = articlesVersion + 7
+export const useArticleCommentsDB = () => useRealtimeReducer2({
+  name: `conduit-comments-${commentsVersion}`,
+  initialState: getRealtimeState(`conduit-comments-${commentsVersion}`).then(s => s || {}),
+  loadingState: null,
+  reducer: (comments, action, resolve) => {
+    // TODO
+    // if (!authorized(action)) { 
+    //   resolve({errors: {'unauthorized': 'to perform this action'}})
+    //   return comments
+    // }
+    
+    const { slug, userId, commentId } = action
+
+    if (action.type === "CreateComment") {
+      const { body, createdAt } = action
+      return {
+        ...comments,
+        [slug]: [
+          ...(comments[slug] || []),
+          { userId, commentId, body, createdAt }
+        ]
+      }
+
+    } else if (action.type === "DeleteComment") {
+      const comment = comments[slug].find(c => c.commentId === commentId)
+      if (comment && comment.userId === action.userId) {
+        return {
+          ...comments,
+          [slug]: [
+            ...(comments[slug] || []).filter(c => c.commentId !== commentId),
+          ]
+        }
+      } else {
+        // TODO unauthorized error
+        return comments
+      }
+    } else {
+      return comments
+    }
+  }
+})
+
+export const useArticleComments = () => {
+  const [comments] = useArticleCommentsDB()
+  const [users] = useUsers()
+
+  
+  return comments && users && Object.fromEntries(Object.entries(comments).map(([slug, comments]) => [
+    slug, 
+    comments.map(comment => ({
+      ...comment,
+      createdAt: new Date(comment.createdAt),
+      author: users.find(u => u.publicKey === comment.userId)
+    }))
+  ]))
 }

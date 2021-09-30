@@ -16,15 +16,30 @@ import {
   FieldValue
 } from "firebase/firestore";
 
+
+/*
+Finish comments
+Add post filters to various views
+Make reducers determinisitic
+Cleanup auth & add firebase auth (and permissions on firebase)
+Remove redux
+
+
+Comment code compose.ts file
+Make a proper open source repo for firebase wrapper with a proper name
+Convert below todos to issues
+*/
+
 // TODO - need a better recovery for when you accidentally overwrite the state
 // TODO - useOptimisticRealtimeReducer: optimistic updates (proccess stream events locally instead of server roundtrip; and then jumps to new server state if it's difference)
 // TODO - disallow "/" in names or encode it for people
 // TODO - catch all firebase errors
-// TODO - garbage collect localstorage cache (and firebase cache)
+// TODO - garbage collect localstorage cache (and firebase cache) 
 // TODO - ensure that we only pull one namespace globally so we don't double subscribe and proccess things (maybe via wrapping in memoize?)
-// TODO - minify reducer before caching to ignore comments and whitespace etc https://www.npmjs.com/package/uglify-js
+// TODO - minify reducer before caching to ignore comments and whitespace etc https://www.npmjs.com/package/uglify-js (how does croquet do this?)
 // TODO - allow key-based lookup when not the whole object is needed
 // TODO - allow full range of firebase querying for reduced state
+// TODO - disallow randomness (and other non-determinisim) or make it determantistic https://croquet.io/docs/croquet/tutorial-2_8_random.html
 
 const firebaseConfig = {
   apiKey: "AIzaSyDZtMhc933h53_fbJFmyM76Mh6aRreHZE8",
