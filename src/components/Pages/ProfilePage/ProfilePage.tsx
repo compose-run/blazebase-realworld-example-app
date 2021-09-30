@@ -17,7 +17,7 @@ export function ProfilePage() {
   const favorites = useLocation().pathname.endsWith('favorites');
 
   const profiles = useProfiles();
-  const profile = wrap(profiles && profiles.find(u => u.username === username))
+  const profile = profiles && profiles.find(u => u.username === username)
 
   async function onFollowToggle(profile: Profile) {
     if (user.isNone()) {
@@ -38,22 +38,17 @@ export function ProfilePage() {
 
   return (
     <div className='profile-page'>
-      {profile.match({
-        none: () => (
-          <div className='article-preview' key={1}>
-            Loading profile...
-          </div>
-        ),
-        some: (profile) => (
-          <UserInfo
+      {profile 
+        ? <UserInfo
             user={profile}
             disabled={submittingFollow}
             onFollowToggle={() => onFollowToggle(profile)}
             onEditSettings={() => redirect('settings')}
           />
-        ),
-      })}
-
+        : <div className='article-preview' key={1}>
+            Loading profile...
+          </div>
+      }
       <div className='container'>
         <div className='row'>
           <div className='col-xs-12 col-md-10 offset-md-1'>
@@ -63,6 +58,7 @@ export function ProfilePage() {
               selectedTab={favorites ? 'Favorited Articles' : 'My Articles'}
               onTabChange={onTabChange(username)}
               onPageChange={onPageChange(username, favorites)}
+              userId={profile && profile.publicKey}
             />
           </div>
         </div>
@@ -71,15 +67,10 @@ export function ProfilePage() {
   );
 }
 
-// TODO - put these filters into ArticlesViewer
-  // const { currentPage } = store.getState().articleViewer;
-  // return await getArticles({ [favorites ? 'favorited' : 'author']: username, offset: (currentPage - 1) * 10 });
-
 function onTabChange(username: string): (page: string) => void {
   return async (page) => {
     const favorited = page === 'Favorited Articles';
     location.hash = `#/profile/${username}${!favorited ? '' : '/favorites'}`;
-    // TODO filter favorited
   };
 }
 

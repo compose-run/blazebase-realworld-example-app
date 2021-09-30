@@ -122,7 +122,6 @@ function NonOwnerArticleMetaActions({
 }: {
   article: Article;
 }) {
-  // TODO - better pattern for loading state?
   const [submittingFavorite, setSubmittingFavorite] = useState(false)
   const [submittingFollow, setSubmittingFollow] = useState(false)
 
@@ -142,7 +141,7 @@ function NonOwnerArticleMetaActions({
       type: favorited ? "UnfavoriteAction" : "FavoriteAction",
       slug,
       userId: user.unwrap().publicKey,
-      token: "TODO"
+      token: "TODO" // TODO AUTHORIZATION
     })
     
     setSubmittingFavorite(false)

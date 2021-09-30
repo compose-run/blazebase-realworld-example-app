@@ -224,13 +224,13 @@ export const useArticles = ():Article[] => {
   return articles
 }
 
-const commentsVersion = articlesVersion + 7
+const commentsVersion = articlesVersion + 8
 export const useArticleCommentsDB = () => useRealtimeReducer2({
   name: `conduit-comments-${commentsVersion}`,
   initialState: getRealtimeState(`conduit-comments-${commentsVersion}`).then(s => s || {}),
   loadingState: null,
   reducer: (comments, action, resolve) => {
-    // TODO
+    // TODO AUTHORIZATION
     // if (!authorized(action)) { 
     //   resolve({errors: {'unauthorized': 'to perform this action'}})
     //   return comments
@@ -258,7 +258,7 @@ export const useArticleCommentsDB = () => useRealtimeReducer2({
           ]
         }
       } else {
-        // TODO unauthorized error
+        // TODO AUTHORIZATION
         return comments
       }
     } else {

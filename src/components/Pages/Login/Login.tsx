@@ -30,8 +30,8 @@ export function Login() {
       store.dispatch(loadKeyPair({privateKey, publicKey: user.publicKey}))
       location.hash = '#/';
     } catch {
-      // TODO throw if decryption fails
-      store.dispatch(updateErrors({"password": ["is incorrect"]}))
+      // AUTHORIZATION
+      // store.dispatch(updateErrors({"password": ["is incorrect"]}))
     }
   }
 

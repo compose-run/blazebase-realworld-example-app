@@ -91,7 +91,3 @@ function _logout() {
   store.dispatch(logout());
   location.hash = '/';
 }
-function useKeypair() {
-  throw new Error('Function not implemented.');
-}
-

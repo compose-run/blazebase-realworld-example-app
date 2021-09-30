@@ -1,8 +1,8 @@
 import { Fragment } from 'react';
 import { useStore } from '../../state/storeHooks';
-import { useArticles } from '../../types/article';
+import { useArticleFavorites, useArticles } from '../../types/article';
 import { classObjectToClassName } from '../../types/style';
-import { wrap } from '../../types/user';
+import { useFollowers, useUser, wrap } from '../../types/user';
 import { ArticlePreview } from '../ArticlePreview/ArticlePreview';
 import { Pagination } from '../Pagination/Pagination';
 
@@ -12,25 +12,35 @@ export function ArticlesViewer({
   selectedTab,
   onPageChange,
   onTabChange,
+  userId
 }: {
   toggleClassName: string;
   tabs: string[];
   selectedTab: string;
   onPageChange?: (index: number) => void;
   onTabChange?: (tab: string) => void;
+  userId?: string // TODO
 }) {
   const { currentPage } = useStore(({ articleViewer }) => articleViewer);
-
-  const allArticles = useArticles()
-
-  // TODO - add feed or global article filters
-  const articles = allArticles && allArticles.slice((currentPage - 1) * 10, currentPage * 10)
-  const articlesCount = allArticles ? allArticles.length : 0
+  const user = useUser()
+  const articles = useArticles()
+  const [following] = useFollowers()
+  const [favorites] = useArticleFavorites()
+  
+  const feedArticles = articles && articles.filter(article =>
+    selectedTab === "Global Feed" || 
+    (selectedTab === "Your Feed" && user.isSome() && following[user.unwrap().publicKey][article.author.publicKey]) ||
+    (selectedTab === "My Articles" && article.author.publicKey === userId) ||
+    (selectedTab === "Favorited Articles" && favorites.users[userId][article.slug])
+  ).sort((a,b) => a.createdAt.getTime() - b.createdAt.getTime())
+  
+  const pageArticles = feedArticles && feedArticles.slice((currentPage - 1) * 10, currentPage * 10)
+  const articlesCount = feedArticles ? feedArticles.length : 0
 
   return (
     <Fragment>
       <ArticlesTabSet {...{ tabs, selectedTab, toggleClassName, onTabChange }} />
-      <ArticleList articles={wrap(articles)} />
+      <ArticleList articles={wrap(pageArticles)} />
       <Pagination currentPage={currentPage} count={articlesCount} itemsPerPage={10} onPageChange={onPageChange} />
     </Fragment>
   );

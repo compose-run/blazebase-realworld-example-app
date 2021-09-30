@@ -31,30 +31,30 @@ export function loadUserIntoApp(user: User) {
   return
 }
 
-// TODO - do this with actual crypto
+// TODO Authentication / authorizatoin
 export const newKeypair = () => ({publicKey: Math.random().toString(), privateKey: Math.random().toString()})
 
-// TODO - do this with actual crypto
+// TODO Authentication / authorizatoin
 export function encryptPrivateKeyWithPassword(privateKey, password) {
   return privateKey.split('').reverse().join(password)
 }
 
-// TODO - do this with actual crypto
+// TODO Authentication / authorizatoin
 export function decryptPrivateKeyWithPassword(encryptedPrivateKey, password) {
   return encryptedPrivateKey.split(password).reverse().join('')
 }
 
-// TODO - do this with actual crypto
+// TODO Authentication / authorizatoin
 function verifySignature(publiKey, signature) {
   return publiKey == signature
 }
 
-// TODO - do this with actual crypto
+// TODO Authentication / authorizatoin
 export function signed(action) {
   return verifySignature(action.publicKey, action.signature)  
 }
 
-// TODO - do this with actual crypto
+// TODO Authentication / authorizatoin
 export function sign(privateKey, action) {
   return { ...action, signature: action.publicKey}
 }

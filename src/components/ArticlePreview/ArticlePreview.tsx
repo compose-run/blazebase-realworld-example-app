@@ -20,7 +20,6 @@ export function ArticlePreview({
   const user = useUser()
   const [isSubmitting, setSubmitting] = useState(false) 
 
-  // todo ensure that we get one instance of this func and re-use it everywhere
   const [, emitFavoriteAction] = useArticleFavorites()
 
   async function onFavoriteToggle() {
@@ -32,7 +31,7 @@ export function ArticlePreview({
       type: favorited ? "UnfavoriteAction" : "FavoriteAction",
       slug,
       userId: user.unwrap().publicKey,
-      token: "TODO"
+      token: "TODO" // TODO AUTHORIZATIOn
     })
 
     setSubmitting(false)

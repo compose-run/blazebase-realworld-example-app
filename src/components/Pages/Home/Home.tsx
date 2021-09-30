@@ -1,7 +1,7 @@
 import { store } from '../../../state/store';
 import { useStoreWithInitializer } from '../../../state/storeHooks';
 import { useTags } from '../../../types/article';
-import { wrap } from '../../../types/user';
+import { getKeyPair, useUser, wrap } from '../../../types/user';
 import { ArticlesViewer } from '../../ArticlesViewer/ArticlesViewer';
 import { changePage } from '../../ArticlesViewer/ArticlesViewer.slice';
 import { ContainerPage } from '../../ContainerPage/ContainerPage';
@@ -10,6 +10,11 @@ import { changeTab } from './Home.slice';
 export function Home() {
   const { selectedTab } = useStoreWithInitializer(({ home }) => home, load);
 
+  async function load() {
+    if (getKeyPair()) {
+      store.dispatch(changeTab('Your Feed'));
+    }
+  }
   return (
     <div className='home-page'>
       {renderBanner()}
@@ -32,13 +37,6 @@ export function Home() {
   );
 }
 
-async function load() {
-  // TODO
-  if (store.getState().app.user.isSome()) {
-    store.dispatch(changeTab('Your Feed'));
-  }
-}
-
 function renderBanner() {
   return (
     <div className='banner'>
@@ -51,7 +49,7 @@ function renderBanner() {
 }
 
 function buildTabsNames(selectedTab: string) {
-  const { user } = store.getState().app;
+  const user = useUser();
 
   return Array.from(new Set([...(user.isSome() ? ['Your Feed'] : []), 'Global Feed', selectedTab]));
 }
