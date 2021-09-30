@@ -1,24 +1,59 @@
-import React from 'react';
-import { store } from '../../state/store';
-import { useStore } from '../../state/storeHooks';
+import { useState } from 'react';
+import { ArticleForEditor } from '../../types/article';
+import { GenericErrors } from '../../types/error';
 import { buildGenericFormField } from '../../types/genericFormField';
 import { ContainerPage } from '../ContainerPage/ContainerPage';
 import { GenericForm } from '../GenericForm/GenericForm';
-import { addTag, EditorState, removeTag, updateField } from './ArticleEditor.slice';
 
-export function ArticleEditor({ onSubmit, submitting }: { onSubmit: (ev: React.FormEvent) => void, submitting: boolean }) {
-  const { article, tag, errors } = useStore(({ editor }) => editor);
+export function ArticleEditor({ 
+  onSubmit, 
+  submitting, 
+  article,
+  errors
+}: { 
+  onSubmit: (newArticle: ArticleForEditor) => void, 
+  submitting: boolean,
+  article?: ArticleForEditor,
+  errors: GenericErrors
+}) {
+  const [currentArticle, setCurrentArticle] = useState(article)
+  const [ tagTextbox, setTagTextbox ] = useState("")
+
+  function onUpdateField(name: string, value: string) {
+    if (name === "tag") {
+      setTagTextbox(value)
+    } else if (name !== "tagList") {
+      setCurrentArticle({
+        ...currentArticle,
+        [name]: value
+      })
+    }
+  }
+
+  function onAddTag() {
+    setCurrentArticle({
+      ...currentArticle,
+      tagList: currentArticle.tagList.concat([tagTextbox])
+    })
+  }
+  
+  function onRemoveTag(_: string, index: number) {
+    setCurrentArticle({
+      ...currentArticle,
+      tagList: currentArticle.tagList.filter((_, i) => i !== index)
+    })
+  }
 
   return (
     <div className='editor-page'>
       <ContainerPage>
         <div className='col-md-10 offset-md-1 col-xs-12'>
           <GenericForm
-            formObject={{ ...article, tag } as unknown as Record<string, string | null>}
+            formObject={{ ...currentArticle, tag: tagTextbox } as unknown as Record<string, string | null>}
             disabled={submitting}
             errors={errors}
             onChange={onUpdateField}
-            onSubmit={onSubmit}
+            onSubmit={(ev) => {ev.preventDefault; onSubmit(currentArticle)}}
             submitButtonText='Publish Article'
             onAddItemToList={onAddTag}
             onRemoveListItem={onRemoveTag}
@@ -45,16 +80,4 @@ export function ArticleEditor({ onSubmit, submitting }: { onSubmit: (ev: React.F
       </ContainerPage>
     </div>
   );
-}
-
-function onUpdateField(name: string, value: string) {
-  store.dispatch(updateField({ name: name as keyof EditorState['article'], value }));
-}
-
-function onAddTag() {
-  store.dispatch(addTag());
-}
-
-function onRemoveTag(_: string, index: number) {
-  store.dispatch(removeTag(index));
 }

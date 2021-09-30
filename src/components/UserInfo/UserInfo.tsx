@@ -1,5 +1,5 @@
-import { useStore } from '../../state/storeHooks';
 import { Profile } from '../../types/profile';
+import { useUser } from '../../types/user';
 
 export function UserInfo({
   user: { image, username, bio, following },
@@ -12,7 +12,7 @@ export function UserInfo({
   onFollowToggle?: () => void;
   onEditSettings?: () => void;
 }) {
-  const { user } = useStore(({ app }) => app);
+  const user = useUser()
   const sessionUsername = user.map((x) => x.username).unwrapOr('');
 
   return (

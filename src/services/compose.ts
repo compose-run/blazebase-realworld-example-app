@@ -26,6 +26,7 @@ Make a proper open source repo for firebase wrapper with a proper name
 Convert below todos to issues
 */
 
+// TODO - a la Conductor (and triple store) make each thing an ID-editable thing; & also push deeper into references
 // TODO - ensure that we only pull one namespace globally so we don't double subscribe and proccess things (maybe via wrapping in memoize?)
 // TODO - need a better recovery for when you accidentally overwrite the state
 // TODO - need better handling of normalization/denormalization (relationships) & querying

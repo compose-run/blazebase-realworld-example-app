@@ -1,39 +1,36 @@
-import { FormEvent, useEffect } from 'react';
-import { store } from '../../../state/store';
-import { useStore } from '../../../state/storeHooks';
-import { useArticlesDB } from '../../../types/article';
-import { sign } from '../../../types/user';
+import { useState } from 'react';
+import { ArticleForEditor, useArticlesDB } from '../../../types/article';
+import { getKeyPair, sign } from '../../../types/user';
 import { ArticleEditor } from '../../ArticleEditor/ArticleEditor';
-import { initializeEditor, startSubmitting, updateErrors } from '../../ArticleEditor/ArticleEditor.slice';
 
 export function NewArticle() {
-  useEffect(() => {
-    store.dispatch(initializeEditor());
-  }, []);
-
-  const { keypair } = useStore(({ app }) => app);
+  const keypair = getKeyPair()
   const [, emitArticleAction] = useArticlesDB();
 
+  const [ submitting, setSubmitting ] = useState(false)
+  const [ errors, setErrors ] = useState({})
 
-  async function onSubmit(ev: FormEvent) {
-    ev.preventDefault();
-    store.dispatch(startSubmitting());
+  async function onSubmit(newArticle: ArticleForEditor) {
+    setSubmitting(true)
+
     const {errors, slug} = await emitArticleAction(sign(keypair.unwrap().privateKey, {
       type: "CreateArticleAction",
-      article: store.getState().editor.article,
+      article: newArticle,
       publicKey: keypair.unwrap().publicKey,
       createdAt: Date.now(),
       slug: Math.random().toString()
     }))
 
+    setSubmitting(false)
+
     if (errors) {
-      store.dispatch(updateErrors(errors))
+      setErrors(errors)
     } else {  
       location.hash = `#/article/${slug}`;
     }
   }
   
 
-  return <ArticleEditor onSubmit={onSubmit} />;
+  return <ArticleEditor onSubmit={onSubmit} errors={errors} submitting={submitting} />;
 }
 

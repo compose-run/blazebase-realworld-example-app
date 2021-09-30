@@ -8,7 +8,7 @@ import { Article, useArticleComments, useArticleCommentsDB, useArticleFavorites,
 import { Comment } from '../../../types/comment';
 import { redirect } from '../../../types/location';
 import { classObjectToClassName } from '../../../types/style';
-import { sign, useFollowers, User, useUser } from '../../../types/user';
+import { getKeyPair, sign, useFollowers, User, useUser } from '../../../types/user';
 import { TagList } from '../../ArticlePreview/ArticlePreview';
 import {
   CommentSectionState,
@@ -205,7 +205,7 @@ function OwnerArticleMetaActions({
 }) {
   const [deleting, setDeleting] = useState(false)
 
-  const { keypair } = useStore(({ app }) => app);
+  const keypair = getKeyPair();
   const [, emitArticleAction] = useArticlesDB()
 
   async function onDeleteArticle() {

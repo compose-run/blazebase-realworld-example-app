@@ -1,15 +1,12 @@
-import { Fragment, useEffect, useState } from 'react';
+import { Fragment, useState } from 'react';
 import { useParams } from 'react-router-dom';
-import { store } from '../../../state/store';
-import { useStore } from '../../../state/storeHooks';
 import { useArticles, useArticlesDB } from '../../../types/article';
-import { sign } from '../../../types/user';
+import { getKeyPair, sign } from '../../../types/user';
 import { ArticleEditor } from '../../ArticleEditor/ArticleEditor';
-import { loadArticle, updateErrors } from '../../ArticleEditor/ArticleEditor.slice';
 
 export function EditArticle() {
   const { slug } = useParams<{ slug: string }>();
-  const { keypair } = useStore(({ app }) => app);
+  const keypair = getKeyPair();
 
   const [, emitArticlesAction] = useArticlesDB()
 
@@ -17,40 +14,45 @@ export function EditArticle() {
   const article = articles && articles.find(a => a.slug === slug)
 
   const [submitting, setSubmitting] = useState(false)
+  const [errors, setErrors] = useState({})
 
-  useEffect(() => {
-    if (article && keypair && article.author.publicKey !== keypair.unwrap().publicKey) {
-      location.hash = '#/';
-      return;
-    }
-  
-    store.dispatch(loadArticle(article));
-  }, [article])
-  
+  if (article && keypair && article.author.publicKey !== keypair.unwrap().publicKey) {
+    location.hash = '#/';
+    return;
+  }
 
-  async function onSubmit(ev) {
-    ev.preventDefault();
+  async function onSubmit(newArticle) {
     setSubmitting(true)
 
-    if (keypair.isNone()) { return }
+    if (keypair.isNone()) { location.hash = '#/'; }
 
+  
     const { errors } = await emitArticlesAction(sign(keypair.unwrap().privateKey, {
       type: "UpdateArticleAction",
-      article: store.getState().editor.article,
+      article: newArticle,
       slug,
       publicKey: keypair.unwrap().publicKey,
       updatedAt: Date.now()
     }))
 
+    setSubmitting(false)
+
     if (errors) {
-      store.dispatch(updateErrors(errors))
+      // TODO ERRORS
     } else {
       location.hash = `#/article/${slug}`;
     }
-    setSubmitting(false)
+    
   }
 
-
-  return <Fragment>{article && <ArticleEditor onSubmit={onSubmit} submitting={submitting} />}</Fragment>;
+  return <Fragment>
+    {article && 
+      <ArticleEditor 
+        onSubmit={onSubmit} 
+        submitting={submitting} 
+        article={article}
+        errors={errors}
+      />}
+    </Fragment>;
 }
 

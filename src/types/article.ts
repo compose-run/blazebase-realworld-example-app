@@ -80,7 +80,7 @@ export interface ArticleDB {
 
 interface ArticleResolve { slug?: string, errors?: GenericErrors }
 
-const articlesVersion = 31
+const articlesVersion = 32
 export const useArticlesDB = () => useRealtimeReducer<ArticleDB[] | null, ArticleAction, ArticleResolve>(`conduit-articles-${articlesVersion}`, (articles, action, resolve) => {
   let errors = {}
   let returnValue = articles
@@ -125,8 +125,7 @@ export const useArticlesDB = () => useRealtimeReducer<ArticleDB[] | null, Articl
   }
   
   return returnValue
-}, getRealtimeState(`conduit-articles-${articlesVersion-1}`).then(articles => articles && articles.filter(({createdAt}) => typeof createdAt !== "string")), null)
-
+}, getRealtimeState(`conduit-articles-${articlesVersion-1}`).then(articles => articles && articles.map((a) => ({...a, updatedAt: 0 - - a.updatedAt}))), null) // TODO - where did this bug from from?
 
 interface ArticleTag {
   slug: string;
