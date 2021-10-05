@@ -6,4 +6,5 @@ export interface Comment {
   updatedAt: Date;
   body: string;
   author: Profile;
+  commentId: string;
 }

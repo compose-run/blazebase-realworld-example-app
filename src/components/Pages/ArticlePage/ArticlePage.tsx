@@ -10,10 +10,6 @@ import { redirect } from '../../../types/location';
 import { classObjectToClassName } from '../../../types/style';
 import { getKeyPair, sign, useFollowers, User, useUser } from '../../../types/user';
 import { TagList } from '../../ArticlePreview/ArticlePreview';
-import {
-  CommentSectionState,
-  updateCommentBody,
-} from './ArticlePage.slice';
 
 export function ArticlePage() {
   const { slug } = useParams<{ slug: string }>();
@@ -24,13 +20,6 @@ export function ArticlePage() {
   if (articles && !article) {
     redirect('');
   }
-
-  const {
-    articlePage: { commentSection },
-  } = useStore(({ articlePage, app }) => ({
-    articlePage,
-    app,
-  }));
 
   return article
     ? 
@@ -49,7 +38,7 @@ export function ArticlePage() {
             <ArticleMeta {...{ article }} />
           </div>
 
-          <CommentSection {...{ commentSection, article }} />
+          <CommentSection {...{ article }} />
         </div>
       </div>
     : <div>Loading article...</div>
@@ -239,10 +228,8 @@ function OwnerArticleMetaActions({
 
 function CommentSection({
   article,
-  commentSection: { commentBody },
 }: {
   article: Article;
-  commentSection: CommentSectionState;
 }) {
   const user = useUser();
   const comments = useArticleComments()
@@ -260,7 +247,6 @@ function CommentSection({
             <CommentForm
               user={user}
               slug={article.slug}
-              commentBody={commentBody}
             />
           ),
         })}
@@ -280,14 +266,13 @@ function CommentSection({
 
 function CommentForm({
   user: { image, publicKey },
-  commentBody,
   slug,
 }: {
   user: User;
-  commentBody: string;
   slug: string;
 }) {
 
+  const [ body, setBody ] = useState("")
   const [submittingComment, setSubmitting] = useState(false)
   const [ , emitCommentAction] = useArticleCommentsDB()
   
@@ -300,13 +285,13 @@ function CommentForm({
     await emitCommentAction({
       type: "CreateComment",
       userId: publicKey,
-      body: commentBody,
+      body,
       slug,
       commentId: Math.random(),
       createdAt: Date.now()
     })
     
-    store.dispatch(updateCommentBody(""))
+    setBody("")
     setSubmitting(false)
   }
 
@@ -317,8 +302,8 @@ function CommentForm({
           className='form-control'
           placeholder='Write a comment...'
           rows={3}
-          onChange={onCommentChange}
-          value={commentBody}
+          onChange={e => setBody(e.target.value)}
+          value={body}
         ></textarea>
       </div>
       <div className='card-footer'>
@@ -329,10 +314,6 @@ function CommentForm({
       </div>
     </form>
   );
-}
-
-function onCommentChange(ev: React.ChangeEvent<HTMLTextAreaElement>) {
-  store.dispatch(updateCommentBody(ev.target.value));
 }
 
 function ArticleComment({
