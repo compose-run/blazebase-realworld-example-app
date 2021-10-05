@@ -15,9 +15,14 @@ import {
   setDoc,
   FieldValue
 } from "firebase/firestore";
+import { getAuth } from "firebase/auth";
 
 /*
 Cleanup auth & add firebase auth (and permissions on firebase)
+next step: 
+
+// TODO: prevent the uid field from being forged via security rules
+// TODO: prevent people from rewriting past histories or deleting each others events via security rules
 
 Comment code compose.ts file
 Make a proper open source repo for firebase wrapper with a proper name
@@ -54,6 +59,7 @@ const app = initializeApp(firebaseConfig);
 const db = initializeFirestore(app, {
   ignoreUndefinedProperties: true
 });
+export const firebaseAuth = getAuth(app)
 
 export const useReducerSafe = <R extends Reducer<any, any>>(
   reducer: R,

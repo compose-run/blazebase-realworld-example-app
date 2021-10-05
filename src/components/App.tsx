@@ -10,11 +10,11 @@ import { Register } from './Pages/Register';
 import { Settings } from './Pages/Settings';
 import { ProfilePage } from './Pages/ProfilePage';
 import { ArticlePage } from './Pages/ArticlePage';
-import { getKeyPair } from './../services/user';
+import { useUser } from '../services/user';
 
 
 export function App() {
-  const userIsLogged = getKeyPair().isSome()
+  const userIsLogged = !!useUser()
 
   return (
     <HashRouter>

@@ -1,8 +1,11 @@
 import React, { useState } from 'react';
-import { getKeyPair, sign, UserSettings, useUser, useUsers } from './../../services/user';
+import { useUser, useUsers } from './../../services/user';
 import { buildGenericFormField } from './../../types/genericFormField';
 import { GenericForm } from './../GenericForm';
 import { ContainerPage } from './../ContainerPage';
+import { UserSettings } from '../../types/user';
+import { signOut } from 'firebase/auth';
+import { firebaseAuth} from '../../services/compose';
 
 export interface SettingsField {
   name: keyof UserSettings;
@@ -18,34 +21,31 @@ export function Settings() {
   const [updating, setUpdating] = useState(false)
 
 
-  const user = newUser || (oldUser.isNone() ? {} : oldUser.unwrap())
+  const user = newUser || (oldUser ? oldUser : {})
   
   function onUpdateField(name: string, value: string) {
     setUser({... user, [name]: value })
   }
 
-  const keypair = getKeyPair()  
   const [, emitUserAction] = useUsers()
 
   async function onUpdateSettings(ev: React.FormEvent) {
     ev.preventDefault();
-    setUpdating(true)
-    if (keypair.isSome()) {
-      const errors = await emitUserAction(sign(keypair.unwrap().privateKey, {
-        type: "UPDATE",
-        publicKey: keypair.unwrap().publicKey,
-        newUser: {
-          ...user,
-          publicKey: keypair.unwrap().publicKey
-        }
-      }))
-      setUpdating(false)
-      if (Object.keys(errors).length) {
-        setErrors(errors)
-      } else {
-        location.hash = '/';
-      }
+    if (!oldUser) { return }
 
+    setUpdating(true)
+    // TODO if email change, do that in firebase auth
+
+    const errors = await emitUserAction({
+      type: "UPDATE",
+      uid: oldUser.uid,
+      newUser: user
+    })
+    setUpdating(false)
+    if (Object.keys(errors).length) {
+      setErrors(errors)
+    } else {
+      location.hash = '/';
     }
   }
 
@@ -77,16 +77,11 @@ export function Settings() {
           />
 
           <hr />
-          <button className='btn btn-outline-danger' onClick={_logout}>
+          <button className='btn btn-outline-danger' onClick={() => signOut(firebaseAuth)}>
             Or click here to logout.
           </button>
         </div>
       </ContainerPage>
     </div>
   );
-}
-
-function _logout() {
-  localStorage.removeItem('keypair');
-  location.hash = '/';
 }

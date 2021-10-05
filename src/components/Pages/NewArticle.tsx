@@ -1,11 +1,11 @@
 import { useState } from 'react';
 import { ArticleForEditor } from './../../types/article';
 import { useArticlesDB } from './../../services/article';
-import { getKeyPair, sign } from './../../services/user';
+import { useUser } from './../../services/user';
 import { ArticleEditor } from './../ArticleEditor';
 
 export function NewArticle() {
-  const keypair = getKeyPair()
+  const user = useUser()
   const [, emitArticleAction] = useArticlesDB();
 
   const [ submitting, setSubmitting ] = useState(false)
@@ -14,13 +14,13 @@ export function NewArticle() {
   async function onSubmit(newArticle: ArticleForEditor) {
     setSubmitting(true)
 
-    const {errors, slug} = await emitArticleAction(sign(keypair.unwrap().privateKey, {
+    const {errors, slug} = await emitArticleAction({
       type: "CreateArticleAction",
       article: newArticle,
-      publicKey: keypair.unwrap().publicKey,
       createdAt: Date.now(),
-      slug: Math.random().toString()
-    }))
+      uid: user.uid,
+      slug: Math.random().toString() // TODO - better slug
+    })
 
     setSubmitting(false)
 

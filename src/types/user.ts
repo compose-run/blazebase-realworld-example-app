@@ -2,12 +2,11 @@ export interface PublicUser {
   username: string;
   bio: string | null;
   image: string | null;
-  publicKey: string;
+  uid: string;
 }
 
 export interface User extends PublicUser {
   email: string;
-  encryptedPrivateKey: string;
 }
 
 export interface UserSettings extends PublicUser {

@@ -1,4 +1,3 @@
-import { Option } from '@hqoss/monads';
 import { format } from 'date-fns';
 import { Fragment, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
@@ -6,7 +5,7 @@ import { Article } from './../../types/article';
 import { Comment } from './../../types/comment';
 import { redirect } from './../../types/location';
 import { classObjectToClassName } from './../../types/style';
-import { getKeyPair, sign, useFollowers, useUser } from './../../services/user';
+import { useFollowers, useUser } from './../../services/user';
 import { User } from './../../types/user';
 import { TagList } from './../ArticlePreview';
 import { useArticleComments, useArticleCommentsDB, useArticleFavorites, useArticles, useArticlesDB } from '../../services/article';
@@ -67,7 +66,7 @@ function ArticleMeta({
     <div className='article-meta'>
       <ArticleAuthorInfo article={article} />
 
-      {user.isSome() && user.unwrap().username === article.author.username ? (
+      {user && user.uid === article.author.uid ? (
         <OwnerArticleMetaActions article={article} />
       ) : (
         <NonOwnerArticleMetaActions
@@ -106,7 +105,7 @@ function NonOwnerArticleMetaActions({
     slug,
     favoritesCount,
     favorited,
-    author: { username, following, publicKey },
+    author: { username, following, uid },
   }
 }: {
   article: Article;
@@ -119,7 +118,7 @@ function NonOwnerArticleMetaActions({
   const [, emitFollowAction] = useFollowers();
 
   async function onFavorite() {
-    if (user.isNone()) {
+    if (!user) {
       redirect('register');
       return;
     }
@@ -129,15 +128,14 @@ function NonOwnerArticleMetaActions({
     await emitFavoriteAction({
       type: favorited ? "UnfavoriteAction" : "FavoriteAction",
       slug,
-      userId: user.unwrap().publicKey,
-      token: "TODO" // TODO AUTHORIZATION
+      uid: user.uid,
     })
     
     setSubmittingFavorite(false)
   }
 
   async function onFollow() {
-    if (user.isNone()) {
+    if (!user) {
       redirect('register');
       return;
     }
@@ -146,8 +144,8 @@ function NonOwnerArticleMetaActions({
   
     await emitFollowAction({
       type: following ? "UnfollowAction" : "FollowAction",
-      follower: user.unwrap().publicKey,
-      leader: publicKey
+      follower: user.uid,
+      leader: uid
     })
 
     setSubmittingFollow(false)
@@ -194,19 +192,19 @@ function OwnerArticleMetaActions({
 }) {
   const [deleting, setDeleting] = useState(false)
 
-  const keypair = getKeyPair();
+  const user = useUser();
   const [, emitArticleAction] = useArticlesDB()
 
   async function onDeleteArticle() {
-    if (keypair.isNone()) { redirect(''); return; }
+    if (!user) { redirect(''); return; }
 
     setDeleting(true)
 
-    await emitArticleAction(sign(keypair.unwrap().privateKey, {
+    await emitArticleAction({
       type: "DeleteArticleAction",
       slug,
-      publicKey: keypair.unwrap().publicKey
-    }))
+      uid: user.uid,
+    })
   }
 
   return (
@@ -237,20 +235,15 @@ function CommentSection({
   return (
     <div className='row'>
       <div className='col-xs-12 col-md-8 offset-md-2'>
-        {user.match({
-          none: () => (
-            <p style={{ display: 'inherit' }}>
-              <Link to='/login'>Sign in</Link> or <Link to='/register'>sign up</Link> to add comments on this article.
-            </p>
-          ),
-          some: (user) => (
-            <CommentForm
+        {user
+          ? <CommentForm
               user={user}
               slug={article.slug}
             />
-          ),
-        })}
-
+          : <p style={{ display: 'inherit' }}>
+              <Link to='/login'>Sign in</Link> or <Link to='/register'>sign up</Link> to add comments on this article.
+            </p>
+        }
         {comments 
           ? <Fragment>
               {(comments[article.slug] || []).map((comment, index) => (
@@ -265,7 +258,7 @@ function CommentSection({
 }
 
 function CommentForm({
-  user: { image, publicKey },
+  user: { image, uid },
   slug,
 }: {
   user: User;
@@ -284,7 +277,7 @@ function CommentForm({
 
     await emitCommentAction({
       type: "CreateComment",
-      userId: publicKey,
+      uid: uid,
       body,
       slug,
       commentId: Math.random(),
@@ -330,7 +323,7 @@ function ArticleComment({
   comment: Comment;
   slug: string;
   index: number;
-  user: Option<User>;
+  user: User;
 }) {
 
   const { username, image } = author || {}
@@ -351,7 +344,7 @@ function ArticleComment({
           {username}
         </Link>
         <span className='date-posted'>{format(createdAt, 'PP')}</span>
-        {user.isSome() && user.unwrap().username === username && (
+        {user && user.username === username && (
           <span className='mod-options'>
             <i
               className='ion-trash-a'
@@ -359,7 +352,7 @@ function ArticleComment({
               onClick={() => emitCommentAction({
                 slug, 
                 commentId,
-                userId: user.unwrap().publicKey,
+                uid: user.uid,
                 type: "DeleteComment"
               })}
             ></i>

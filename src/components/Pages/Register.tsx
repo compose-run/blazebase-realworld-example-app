@@ -1,8 +1,10 @@
+import { createUserWithEmailAndPassword } from "firebase/auth";
 import { buildGenericFormField } from './../../types/genericFormField';
 import { GenericForm } from './../GenericForm';
-import { newKeypair, useUsers, encryptPrivateKeyWithPassword, setKeyPair } from './../../services/user';
+import { useUsers } from './../../services/user';
 import { ContainerPage } from './../ContainerPage';
 import { useState } from 'react';
+import { firebaseAuth} from "../../services/compose";
 
 export function Register() {
 
@@ -20,28 +22,29 @@ export function Register() {
     ev.preventDefault();
     setSigningUp(true)
 
-    const keypair = newKeypair()
-
-    const errors = await emitUserAction({
-      type: "SIGN_UP",
-      user: {
-        username: user.username, 
-        email: user.email, 
-        publicKey: keypair.publicKey, 
-        encryptedPrivateKey: encryptPrivateKeyWithPassword(keypair.privateKey, user.password),
-        bio: null,
-        image: null
+    try { 
+      const { user: { uid }} = await createUserWithEmailAndPassword(firebaseAuth, user.email, user.password)
+      const errors = await emitUserAction({
+        type: "SIGN_UP",
+        user: {
+          username: user.username, 
+          email: user.email, 
+          uid,
+          bio: null,
+          image: null
+        }
+      })
+      
+      if (Object.keys(errors).length) {
+        setErrors(errors)
+      } else {
+        location.hash = '#/';
       }
-    })
-
-    setSigningUp(false)
-  
-    if (Object.keys(errors).length) {
-      setErrors(errors)
-    } else {
-      setKeyPair(keypair)
-      location.hash = '#/';
+    } catch (e) {
+      setErrors({register: [e.message]})
     }
+    
+    setSigningUp(false)
   }
 
   return (

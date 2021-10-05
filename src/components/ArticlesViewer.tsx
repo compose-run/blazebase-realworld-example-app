@@ -1,6 +1,6 @@
 import { Fragment, useState } from 'react';
 import { classObjectToClassName } from './../types/style';
-import { useFollowers, useUser, wrap } from './../services/user';
+import { useFollowers, useUser } from './../services/user';
 import { ArticlePreview } from './ArticlePreview';
 import { Pagination } from './Pagination';
 import { useArticleFavorites, useArticles } from '../services/article';
@@ -10,13 +10,13 @@ export function ArticlesViewer({
   tabs,
   selectedTab,
   onTabChange,
-  userId
+  uid
 }: {
   toggleClassName: string;
   tabs: string[];
   selectedTab: string;
   onTabChange?: (tab: string) => void;
-  userId?: string // TODO
+  uid?: string
 }) {
   const [currentPage, setCurrentPage] = useState(1)
   const user = useUser()
@@ -26,9 +26,9 @@ export function ArticlesViewer({
   
   const feedArticles = articles && articles.filter(article =>
     selectedTab === "Global Feed" || 
-    (selectedTab === "Your Feed" && user.isSome() && following[user.unwrap().publicKey] && following[user.unwrap().publicKey][article.author.publicKey]) ||
-    (selectedTab === "My Articles" && article.author.publicKey === userId) ||
-    (selectedTab === "Favorited Articles" && favorites.users[userId] && favorites.users[userId][article.slug])
+    (selectedTab === "Your Feed" && user && following[user.uid] && following[user.uid][article.author.uid]) ||
+    (selectedTab === "My Articles" && article.author.uid === uid) ||
+    (selectedTab === "Favorited Articles" && favorites.users[uid] && favorites.users[uid][article.slug])
   ).sort((a,b) => a.createdAt.getTime() - b.createdAt.getTime())
   
   const pageArticles = feedArticles && feedArticles.slice((currentPage - 1) * 10, currentPage * 10)
@@ -37,7 +37,7 @@ export function ArticlesViewer({
   return (
     <Fragment>
       <ArticlesTabSet {...{ tabs, selectedTab, toggleClassName, onTabChange }} />
-      <ArticleList articles={wrap(pageArticles)} />
+      <ArticleList articles={pageArticles} />
       <Pagination currentPage={currentPage} count={articlesCount} itemsPerPage={10} onPageChange={setCurrentPage} />
     </Fragment>
   );
@@ -82,27 +82,26 @@ function Tab({ tab, active, onClick }: { tab: string; active: boolean; onClick: 
   );
 }
 
-function ArticleList({ articles }: { articles  }) { // articles: ArticleViewerState['articles']
-  return articles.match({
-    none: () => (
+function ArticleList({ articles }) { 
+  return articles
+   ? (
+    <Fragment>
+      {articles.length === 0 && (
+        <div className='article-preview' key={1}>
+          No articles are here... yet.
+        </div>
+      )}
+      {articles.map((article, index) => (
+        <ArticlePreview
+          key={article.slug}
+          article={article}
+        />
+      ))}
+    </Fragment>
+  )
+  : (
       <div className='article-preview' key={1}>
         Loading articles...
       </div>
-    ),
-    some: (articles) => (
-      <Fragment>
-        {articles.length === 0 && (
-          <div className='article-preview' key={1}>
-            No articles are here... yet.
-          </div>
-        )}
-        {articles.map((article, index) => (
-          <ArticlePreview
-            key={article.slug}
-            article={article}
-          />
-        ))}
-      </Fragment>
-    ),
-  });
+    )
 }

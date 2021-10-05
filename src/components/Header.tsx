@@ -1,6 +1,7 @@
 import { Fragment } from 'react';
 import { HashRouter, NavLink } from 'react-router-dom';
-import { User, useUser } from '../services/user';
+import { useUser } from '../services/user';
+import { User } from '../types/user';
 
 export function Header() {
   const user = useUser();
@@ -15,10 +16,7 @@ export function Header() {
           <HashRouter>
             <NavItem text='Home' href='/' />
 
-            {user.match({
-              none: () => <GuestLinks />,
-              some: (user) => <UserLinks user={user} />,
-            })}
+            {user ? <UserLinks user={user} /> :  <GuestLinks />}
           </HashRouter>
         </ul>
       </div>

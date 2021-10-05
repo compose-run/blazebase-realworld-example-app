@@ -1,12 +1,12 @@
 import { Fragment, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { useArticles, useArticlesDB } from '../../services/article';
-import { getKeyPair, sign } from '../../services/user';
+import { useUser } from '../../services/user';
 import { ArticleEditor } from '../ArticleEditor';
 
 export function EditArticle() {
   const { slug } = useParams<{ slug: string }>();
-  const keypair = getKeyPair();
+  const user = useUser();
 
   const [, emitArticlesAction] = useArticlesDB()
 
@@ -16,7 +16,7 @@ export function EditArticle() {
   const [submitting, setSubmitting] = useState(false)
   const [errors, setErrors] = useState({})
 
-  if (article && keypair && article.author.publicKey !== keypair.unwrap().publicKey) {
+  if (article && user && article.author.uid !== user.uid) {
     location.hash = '#/';
     return;
   }
@@ -24,21 +24,21 @@ export function EditArticle() {
   async function onSubmit(newArticle) {
     setSubmitting(true)
 
-    if (keypair.isNone()) { location.hash = '#/'; }
+    if (!user) { location.hash = '#/'; }
 
   
-    const { errors } = await emitArticlesAction(sign(keypair.unwrap().privateKey, {
+    const { errors } = await emitArticlesAction({
       type: "UpdateArticleAction",
       article: newArticle,
       slug,
-      publicKey: keypair.unwrap().publicKey,
+      uid: user.uid,
       updatedAt: Date.now()
-    }))
+    })
 
     setSubmitting(false)
 
     if (errors) {
-      // TODO ERRORS
+      setErrors(errors)
     } else {
       location.hash = `#/article/${slug}`;
     }

@@ -1,11 +1,13 @@
 import { useState } from 'react';
 import { useTags } from '../../services/article';
-import { getKeyPair, wrap } from '../../services/user';
+import { firebaseAuth} from '../../services/compose';
 import { ArticlesViewer } from '../ArticlesViewer';
 import { ContainerPage } from '../ContainerPage';
 
 export function Home() {
-  const [ selectedTab, setSelectedTab ] = useState(getKeyPair() ? 'Your Feed' : 'Global Feed')
+  const [ selectedTab, setSelectedTab ] = useState(firebaseAuth.currentUser ? 'Your Feed' : 'Global Feed') // TODO confirm this works
+
+  // TODO - do I need to wrap setSelectedTab to also modify the URL hash? (look at the previous version)
 
   return (
     <div className='home-page'>
@@ -21,7 +23,7 @@ export function Home() {
         </div>
 
         <div className='col-md-3'>
-          <HomeSidebar />
+          <HomeSidebar setSelectedTab={setSelectedTab} />
         </div>
       </ContainerPage>
     </div>
@@ -40,29 +42,27 @@ function renderBanner() {
 }
 
 function buildTabsNames(selectedTab: string) {
-  return Array.from(new Set([...(getKeyPair().isSome() ? ['Your Feed'] : []), 'Global Feed']));
+  return Array.from(new Set([...(firebaseAuth.currentUser ? ['Your Feed'] : []), 'Global Feed'])); // TODO confirm this works
 }
 
-function HomeSidebar() {
+function HomeSidebar({setSelectedTab}) {
   const tags = useTags()
 
   return (
     <div className='sidebar'>
       <p>Popular Tags</p>
       
-      {wrap(tags).match({
-        none: () => <span>Loading tags...</span>,
-        some: (tags) => (
-          <div className='tag-list'>
-            {' '}
-            {tags.map((tag) => (
-              <a key={tag} href='#' className='tag-pill tag-default' onClick={() => onTabChange(`# ${tag}`)}>
-                {tag}
-              </a>
-            ))}{' '}
-          </div>
-        ),
-      })}
+      {tags 
+        ? <div className='tag-list'>
+        {' '}
+        {tags.map((tag) => (
+          <a key={tag} href='#' className='tag-pill tag-default' onClick={() => setSelectedTab(tag)}>
+            {tag}
+          </a>
+        ))}{' '}
+      </div> 
+      : <span>Loading tags...</span>
+      }
     </div>
   );
 }

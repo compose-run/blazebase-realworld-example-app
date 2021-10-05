@@ -1,8 +1,11 @@
+
+import { signInWithEmailAndPassword } from "firebase/auth";
 import React, { useState } from 'react';
 import { buildGenericFormField } from './../../types/genericFormField';
 import { GenericForm } from './../GenericForm';
 import { ContainerPage } from './../ContainerPage';
-import { decryptPrivateKeyWithPassword, setKeyPair, useUsers } from '../../services/user';
+import { useUsers } from '../../services/user';
+import { firebaseAuth} from "../../services/compose";
 
 export function Login() {
   const [ users ] = useUsers()
@@ -12,7 +15,7 @@ export function Login() {
   const [ password, setPassword ] = useState('')
   const [ errors, setErrors ] = useState({})
 
-  function signIn(ev: React.FormEvent) {
+  async function signIn(ev: React.FormEvent) {
     ev.preventDefault();
   
     setLoggingIn(true)
@@ -25,12 +28,13 @@ export function Login() {
     }
 
     try {
-      const privateKey = decryptPrivateKeyWithPassword(user.encryptedPrivateKey, password)
-      setKeyPair({privateKey, publicKey: user.publicKey})
+      await signInWithEmailAndPassword(firebaseAuth, user.email, password)
       location.hash = '#/';
-    } catch {
-      setErrors({"password": ["is incorrect"]})
+    } catch (e) {
+      setErrors({"login": [e.message]})
     }
+
+    setLoggingIn(false)
   }
 
   function onUpdateField(name: string, value: string) {

@@ -14,25 +14,24 @@ export function ArticlePreview({
     title,
     description,
     tagList,
-    author: { image, username },
+    author: { image = '', username = ''},
   }}: {
   article: Article;
 }) {
   const user = useUser()
-  const [isSubmitting, setSubmitting] = useState(false) 
+  const [isSubmitting, setSubmitting] = useState(false)
 
   const [, emitFavoriteAction] = useArticleFavorites()
 
   async function onFavoriteToggle() {
-    if (user.isNone()) return
+    if (!user) return
 
     setSubmitting(true)
 
     await emitFavoriteAction({
       type: favorited ? "UnfavoriteAction" : "FavoriteAction",
       slug,
-      userId: user.unwrap().publicKey,
-      token: "TODO" // TODO AUTHORIZATIOn
+      uid: user.uid,
     })
 
     setSubmitting(false)

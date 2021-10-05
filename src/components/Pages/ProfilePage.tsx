@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useLocation, useParams } from 'react-router-dom';
 import { redirect } from '../../types/location';
 import { Profile } from '../../types/profile';
-import { useFollowers, useProfiles, useUser, wrap } from '../../services/user';
+import { useFollowers, useProfiles, useUser } from '../../services/user';
 import { ArticlesViewer } from '../ArticlesViewer';
 import { UserInfo } from '../UserInfo';
 
@@ -18,7 +18,7 @@ export function ProfilePage() {
   const profile = profiles && profiles.find(u => u.username === username)
 
   async function onFollowToggle(profile: Profile) {
-    if (user.isNone()) {
+    if (!user) {
       redirect('register');
       return;
     }
@@ -27,8 +27,8 @@ export function ProfilePage() {
   
     await emitFollowAction({
       type: profile.following ? "UnfollowAction" : "FollowAction",
-      follower: user.unwrap().publicKey,
-      leader: profile.publicKey
+      follower: user.uid,
+      leader: profile.uid
     })
 
     setSubmittingFollow(false)
@@ -55,7 +55,7 @@ export function ProfilePage() {
               tabs={['My Articles', 'Favorited Articles']}
               selectedTab={favorites ? 'Favorited Articles' : 'My Articles'}
               onTabChange={onTabChange(username)}
-              userId={profile && profile.publicKey}
+              uid={profile && profile.uid}
             />
           </div>
         </div>
