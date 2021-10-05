@@ -1,4 +1,4 @@
-import { Fragment } from 'react';
+import { Fragment, useState } from 'react';
 import { useStore } from '../../state/storeHooks';
 import { useArticleFavorites, useArticles } from '../../types/article';
 import { classObjectToClassName } from '../../types/style';
@@ -10,18 +10,16 @@ export function ArticlesViewer({
   toggleClassName,
   tabs,
   selectedTab,
-  onPageChange,
   onTabChange,
   userId
 }: {
   toggleClassName: string;
   tabs: string[];
   selectedTab: string;
-  onPageChange?: (index: number) => void;
   onTabChange?: (tab: string) => void;
   userId?: string // TODO
 }) {
-  const { currentPage } = useStore(({ articleViewer }) => articleViewer);
+  const [currentPage, setCurrentPage] = useState(1)
   const user = useUser()
   const articles = useArticles()
   const [following] = useFollowers()
@@ -41,7 +39,7 @@ export function ArticlesViewer({
     <Fragment>
       <ArticlesTabSet {...{ tabs, selectedTab, toggleClassName, onTabChange }} />
       <ArticleList articles={wrap(pageArticles)} />
-      <Pagination currentPage={currentPage} count={articlesCount} itemsPerPage={10} onPageChange={onPageChange} />
+      <Pagination currentPage={currentPage} count={articlesCount} itemsPerPage={10} onPageChange={setCurrentPage} />
     </Fragment>
   );
 }

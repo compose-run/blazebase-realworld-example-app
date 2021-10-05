@@ -28,7 +28,7 @@ Convert below todos to issues
 
 // TODO - a la Conductor (and triple store) make each thing an ID-editable thing; & also push deeper into references
 // TODO - ensure that we only pull one namespace globally so we don't double subscribe and proccess things (maybe via wrapping in memoize?)
-// TODO - need a better recovery for when you accidentally overwrite the state
+// TODO - need a better recovery for when you accidentally overwrite the state (and want to migrate back to a state that doesn't exist semantically)
 // TODO - need better handling of normalization/denormalization (relationships) & querying
 
 // TODO - allow key-based lookup when not the whole object is needed

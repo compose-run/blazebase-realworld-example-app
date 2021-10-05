@@ -24,7 +24,6 @@ export function Home() {
             toggleClassName='feed-toggle'
             selectedTab={selectedTab}
             tabs={buildTabsNames(selectedTab)}
-            onPageChange={onPageChange}
             onTabChange={onTabChange}
           />
         </div>
@@ -50,10 +49,6 @@ function renderBanner() {
 
 function buildTabsNames(selectedTab: string) {
   return Array.from(new Set([...(getKeyPair().isSome() ? ['Your Feed'] : []), 'Global Feed']));
-}
-
-async function onPageChange(index: number) {
-  store.dispatch(changePage(index));
 }
 
 async function onTabChange(tab: string) {

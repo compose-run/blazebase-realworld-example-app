@@ -57,7 +57,6 @@ export function ProfilePage() {
               tabs={['My Articles', 'Favorited Articles']}
               selectedTab={favorites ? 'Favorited Articles' : 'My Articles'}
               onTabChange={onTabChange(username)}
-              onPageChange={onPageChange(username, favorites)}
               userId={profile && profile.publicKey}
             />
           </div>
@@ -71,11 +70,5 @@ function onTabChange(username: string): (page: string) => void {
   return async (page) => {
     const favorited = page === 'Favorited Articles';
     location.hash = `#/profile/${username}${!favorited ? '' : '/favorites'}`;
-  };
-}
-
-function onPageChange(username: string, favorited: boolean): (index: number) => void {
-  return async (index) => {
-    store.dispatch(changePage(index));
   };
 }
