@@ -27,9 +27,9 @@ export function ArticlesViewer({
   
   const feedArticles = articles && articles.filter(article =>
     selectedTab === "Global Feed" || 
-    (selectedTab === "Your Feed" && user.isSome() && following[user.unwrap().publicKey][article.author.publicKey]) ||
+    (selectedTab === "Your Feed" && user.isSome() && following[user.unwrap().publicKey] && following[user.unwrap().publicKey][article.author.publicKey]) ||
     (selectedTab === "My Articles" && article.author.publicKey === userId) ||
-    (selectedTab === "Favorited Articles" && favorites.users[userId][article.slug])
+    (selectedTab === "Favorited Articles" && favorites.users[userId] && favorites.users[userId][article.slug])
   ).sort((a,b) => a.createdAt.getTime() - b.createdAt.getTime())
   
   const pageArticles = feedArticles && feedArticles.slice((currentPage - 1) * 10, currentPage * 10)

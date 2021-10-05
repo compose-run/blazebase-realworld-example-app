@@ -1,45 +1,46 @@
-import { dispatchOnCall, store } from '../../../state/store';
-import { useStoreWithInitializer } from '../../../state/storeHooks';
 import { buildGenericFormField } from '../../../types/genericFormField';
 import { GenericForm } from '../../GenericForm/GenericForm';
-import { initializeRegister, RegisterState, startSigningUp, updateErrors, updateField } from './Register.slice';
-import { newKeypair, UserForRegistration, useUsers, encryptPrivateKeyWithPassword, setKeyPair } from '../../../types/user';
+import { newKeypair, useUsers, encryptPrivateKeyWithPassword, setKeyPair } from '../../../types/user';
 import { ContainerPage } from '../../ContainerPage/ContainerPage';
+import { useState } from 'react';
 
 export function Register() {
-  const { errors, signingUp, user } = useStoreWithInitializer(
-    ({ register }) => register,
-    dispatchOnCall(initializeRegister())
-  );
+
+  const [errors, setErrors] = useState({})
+  const [signingUp, setSigningUp] = useState(false)
+  const [user, setUser] = useState({username: '', email: '', password: ''})
 
   const [users, emitUserAction] = useUsers();
 
-  function onSignUp(user: UserForRegistration) {
-    return async (ev: React.FormEvent) => {
-      ev.preventDefault();
-      store.dispatch(startSigningUp());
+  function onUpdateField(name: string, value: string) {
+    setUser({...user, [name]: value})
+  }
 
-      const keypair = newKeypair()
+  async function onSignUp(ev: React.FormEvent) {
+    ev.preventDefault();
+    setSigningUp(true)
 
-      const errors = await emitUserAction({
-        type: "SIGN_UP",
-        user: {
-          username: user.username, 
-          email: user.email, 
-          publicKey: keypair.publicKey, 
-          encryptedPrivateKey: encryptPrivateKeyWithPassword(keypair.privateKey, user.password),
-          bio: null,
-          image: null
-        }
-      })
-    
-      if (Object.keys(errors).length) {
-        store.dispatch(updateErrors(errors))
-      } else {
-        setKeyPair(keypair)
-        location.hash = '#/';
+    const keypair = newKeypair()
+
+    const errors = await emitUserAction({
+      type: "SIGN_UP",
+      user: {
+        username: user.username, 
+        email: user.email, 
+        publicKey: keypair.publicKey, 
+        encryptedPrivateKey: encryptPrivateKeyWithPassword(keypair.privateKey, user.password),
+        bio: null,
+        image: null
       }
-      
+    })
+
+    setSigningUp(false)
+  
+    if (Object.keys(errors).length) {
+      setErrors(errors)
+    } else {
+      setKeyPair(keypair)
+      location.hash = '#/';
     }
   }
 
@@ -58,7 +59,7 @@ export function Register() {
             submitButtonText='Sign up'
             errors={errors}
             onChange={onUpdateField}
-            onSubmit={onSignUp(user)}
+            onSubmit={onSignUp}
             fields={[
               buildGenericFormField({ name: 'username', placeholder: 'Username' }),
               buildGenericFormField({ name: 'email', placeholder: 'Email' }),
@@ -69,8 +70,4 @@ export function Register() {
       </ContainerPage>
     </div>
   );
-}
-
-function onUpdateField(name: string, value: string) {
-  store.dispatch(updateField({ name: name as keyof RegisterState['user'], value }));
 }
