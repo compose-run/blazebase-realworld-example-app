@@ -1,11 +1,9 @@
 import { useState } from 'react';
 import { useLocation, useParams } from 'react-router-dom';
-import { store } from '../../../state/store';
 import { redirect } from '../../../types/location';
 import { Profile } from '../../../types/profile';
 import { useFollowers, useProfiles, useUser, wrap } from '../../../types/user';
 import { ArticlesViewer } from '../../ArticlesViewer/ArticlesViewer';
-import { changePage } from '../../ArticlesViewer/ArticlesViewer.slice';
 import { UserInfo } from '../../UserInfo/UserInfo';
 
 export function ProfilePage() {

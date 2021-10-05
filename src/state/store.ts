@@ -1,11 +1,10 @@
 import { Action, configureStore } from '@reduxjs/toolkit';
 import home from '../components/Pages/Home/Home.slice';
-import profile from '../components/Pages/ProfilePage/ProfilePage.slice';
 
 const middlewareConfiguration = { serializableCheck: false };
 
 export const store = configureStore({
-  reducer: { home, profile },
+  reducer: { home },
   devTools: true,
   middleware: (getDefaultMiddleware) => getDefaultMiddleware(middlewareConfiguration),
 });
