@@ -1,10 +1,7 @@
-import React, { useEffect, useState } from 'react';
-import { store } from '../../../state/store';
-import { useStore } from '../../../state/storeHooks';
+import React, { useState } from 'react';
 import { getKeyPair, sign, UserSettings, useUser, useUsers } from '../../../types/user';
 import { buildGenericFormField } from '../../../types/genericFormField';
 import { GenericForm } from '../../GenericForm/GenericForm';
-import { SettingsState, startUpdate, updateErrors, updateField } from './Settings.slice';
 import { ContainerPage } from '../../ContainerPage/ContainerPage';
 
 export interface SettingsField {

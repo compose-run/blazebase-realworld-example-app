@@ -1,5 +1,4 @@
 import { Fragment, useState } from 'react';
-import { useStore } from '../../state/storeHooks';
 import { useArticleFavorites, useArticles } from '../../types/article';
 import { classObjectToClassName } from '../../types/style';
 import { useFollowers, useUser, wrap } from '../../types/user';

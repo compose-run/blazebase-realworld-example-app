@@ -16,9 +16,7 @@ import {
   FieldValue
 } from "firebase/firestore";
 
-
 /*
-Remove store.ts
 Cleanup auth & add firebase auth (and permissions on firebase)
 
 Comment code compose.ts file

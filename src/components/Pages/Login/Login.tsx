@@ -29,8 +29,7 @@ export function Login() {
       setKeyPair({privateKey, publicKey: user.publicKey})
       location.hash = '#/';
     } catch {
-      // AUTHORIZATION
-      // store.dispatch(updateErrors({"password": ["is incorrect"]}))
+      setErrors({"password": ["is incorrect"]})
     }
   }
 

@@ -1,9 +1,7 @@
 import { Option } from '@hqoss/monads';
 import { format } from 'date-fns';
-import React, { Fragment, useState } from 'react';
+import { Fragment, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
-import { store } from '../../../state/store';
-import { useStore } from '../../../state/storeHooks';
 import { Article, useArticleComments, useArticleCommentsDB, useArticleFavorites, useArticles, useArticlesDB } from '../../../types/article';
 import { Comment } from '../../../types/comment';
 import { redirect } from '../../../types/location';

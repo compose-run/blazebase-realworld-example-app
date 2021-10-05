@@ -1,20 +1,12 @@
-import { store } from '../../../state/store';
-import { useStoreWithInitializer } from '../../../state/storeHooks';
+import { useState } from 'react';
 import { useTags } from '../../../types/article';
 import { getKeyPair, wrap } from '../../../types/user';
 import { ArticlesViewer } from '../../ArticlesViewer/ArticlesViewer';
-import { changePage } from '../../ArticlesViewer/ArticlesViewer.slice';
 import { ContainerPage } from '../../ContainerPage/ContainerPage';
-import { changeTab } from './Home.slice';
 
 export function Home() {
-  const { selectedTab } = useStoreWithInitializer(({ home }) => home, load);
+  const [ selectedTab, setSelectedTab ] = useState(getKeyPair() ? 'Your Feed' : 'Global Feed')
 
-  async function load() {
-    if (getKeyPair()) {
-      store.dispatch(changeTab('Your Feed'));
-    }
-  }
   return (
     <div className='home-page'>
       {renderBanner()}
@@ -24,7 +16,7 @@ export function Home() {
             toggleClassName='feed-toggle'
             selectedTab={selectedTab}
             tabs={buildTabsNames(selectedTab)}
-            onTabChange={onTabChange}
+            onTabChange={setSelectedTab}
           />
         </div>
 
@@ -49,10 +41,6 @@ function renderBanner() {
 
 function buildTabsNames(selectedTab: string) {
   return Array.from(new Set([...(getKeyPair().isSome() ? ['Your Feed'] : []), 'Global Feed']));
-}
-
-async function onTabChange(tab: string) {
-  store.dispatch(changeTab(tab));
 }
 
 function HomeSidebar() {
