@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
-import { decryptPrivateKeyWithPassword, setKeyPair, useUsers } from '../../../types/user';
-import { buildGenericFormField } from '../../../types/genericFormField';
-import { GenericForm } from '../../GenericForm/GenericForm';
-import { ContainerPage } from '../../ContainerPage/ContainerPage';
+import { buildGenericFormField } from './../../types/genericFormField';
+import { GenericForm } from './../GenericForm';
+import { ContainerPage } from './../ContainerPage';
+import { decryptPrivateKeyWithPassword, setKeyPair, useUsers } from '../../services/user';
 
 export function Login() {
   const [ users ] = useUsers()

@@ -1,4 +1,4 @@
-import { GenericErrors } from '../../types/error';
+import { GenericErrors } from '../types/error';
 
 export function Errors({ errors }: { errors: GenericErrors }) {
   return (

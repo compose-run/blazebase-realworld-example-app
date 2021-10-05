@@ -1,8 +1,9 @@
 import { format } from 'date-fns';
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Article, useArticleFavorites, useArticlesDB } from '../../types/article';
-import { useUser } from '../../types/user';
+import { Article } from '../types/article';
+import { useUser } from '../services/user';
+import { useArticleFavorites } from '../services/article';
 
 export function ArticlePreview({
   article: {

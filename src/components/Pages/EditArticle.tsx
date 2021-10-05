@@ -1,8 +1,8 @@
 import { Fragment, useState } from 'react';
 import { useParams } from 'react-router-dom';
-import { useArticles, useArticlesDB } from '../../../types/article';
-import { getKeyPair, sign } from '../../../types/user';
-import { ArticleEditor } from '../../ArticleEditor/ArticleEditor';
+import { useArticles, useArticlesDB } from '../../services/article';
+import { getKeyPair, sign } from '../../services/user';
+import { ArticleEditor } from '../ArticleEditor';
 
 export function EditArticle() {
   const { slug } = useParams<{ slug: string }>();

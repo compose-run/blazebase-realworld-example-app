@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
-import { getKeyPair, sign, UserSettings, useUser, useUsers } from '../../../types/user';
-import { buildGenericFormField } from '../../../types/genericFormField';
-import { GenericForm } from '../../GenericForm/GenericForm';
-import { ContainerPage } from '../../ContainerPage/ContainerPage';
+import { getKeyPair, sign, UserSettings, useUser, useUsers } from './../../services/user';
+import { buildGenericFormField } from './../../types/genericFormField';
+import { GenericForm } from './../GenericForm';
+import { ContainerPage } from './../ContainerPage';
 
 export interface SettingsField {
   name: keyof UserSettings;
@@ -12,8 +12,6 @@ export interface SettingsField {
 }
 
 export function Settings() {
-
-  
   const oldUser = useUser()
   const [newUser, setUser] = useState(null)
   const [errors, setErrors] = useState({})

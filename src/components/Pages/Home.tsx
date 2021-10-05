@@ -1,8 +1,8 @@
 import { useState } from 'react';
-import { useTags } from '../../../types/article';
-import { getKeyPair, wrap } from '../../../types/user';
-import { ArticlesViewer } from '../../ArticlesViewer/ArticlesViewer';
-import { ContainerPage } from '../../ContainerPage/ContainerPage';
+import { useTags } from '../../services/article';
+import { getKeyPair, wrap } from '../../services/user';
+import { ArticlesViewer } from '../ArticlesViewer';
+import { ContainerPage } from '../ContainerPage';
 
 export function Home() {
   const [ selectedTab, setSelectedTab ] = useState(getKeyPair() ? 'Your Feed' : 'Global Feed')

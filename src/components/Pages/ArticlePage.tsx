@@ -2,12 +2,14 @@ import { Option } from '@hqoss/monads';
 import { format } from 'date-fns';
 import { Fragment, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
-import { Article, useArticleComments, useArticleCommentsDB, useArticleFavorites, useArticles, useArticlesDB } from '../../../types/article';
-import { Comment } from '../../../types/comment';
-import { redirect } from '../../../types/location';
-import { classObjectToClassName } from '../../../types/style';
-import { getKeyPair, sign, useFollowers, User, useUser } from '../../../types/user';
-import { TagList } from '../../ArticlePreview/ArticlePreview';
+import { Article } from './../../types/article';
+import { Comment } from './../../types/comment';
+import { redirect } from './../../types/location';
+import { classObjectToClassName } from './../../types/style';
+import { getKeyPair, sign, useFollowers, useUser } from './../../services/user';
+import { User } from './../../types/user';
+import { TagList } from './../ArticlePreview';
+import { useArticleComments, useArticleCommentsDB, useArticleFavorites, useArticles, useArticlesDB } from '../../services/article';
 
 export function ArticlePage() {
   const { slug } = useParams<{ slug: string }>();

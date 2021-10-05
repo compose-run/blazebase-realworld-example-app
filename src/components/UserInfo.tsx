@@ -1,5 +1,5 @@
-import { Profile } from '../../types/profile';
-import { useUser } from '../../types/user';
+import { Profile } from '../types/profile';
+import { useUser } from '../services/user';
 
 export function UserInfo({
   user: { image, username, bio, following },

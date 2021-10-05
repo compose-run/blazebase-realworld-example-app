@@ -1,6 +1,6 @@
 import { Fragment } from 'react';
 import { HashRouter, NavLink } from 'react-router-dom';
-import { User, useUser } from '../../types/user';
+import { User, useUser } from '../services/user';
 
 export function Header() {
   const user = useUser();

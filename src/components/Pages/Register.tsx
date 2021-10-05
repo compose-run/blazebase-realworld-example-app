@@ -1,7 +1,7 @@
-import { buildGenericFormField } from '../../../types/genericFormField';
-import { GenericForm } from '../../GenericForm/GenericForm';
-import { newKeypair, useUsers, encryptPrivateKeyWithPassword, setKeyPair } from '../../../types/user';
-import { ContainerPage } from '../../ContainerPage/ContainerPage';
+import { buildGenericFormField } from './../../types/genericFormField';
+import { GenericForm } from './../GenericForm';
+import { newKeypair, useUsers, encryptPrivateKeyWithPassword, setKeyPair } from './../../services/user';
+import { ContainerPage } from './../ContainerPage';
 import { useState } from 'react';
 
 export function Register() {

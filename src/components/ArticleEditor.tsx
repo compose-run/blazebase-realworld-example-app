@@ -1,9 +1,9 @@
 import { useState } from 'react';
-import { ArticleForEditor } from '../../types/article';
-import { GenericErrors } from '../../types/error';
-import { buildGenericFormField } from '../../types/genericFormField';
-import { ContainerPage } from '../ContainerPage/ContainerPage';
-import { GenericForm } from '../GenericForm/GenericForm';
+import { ArticleForEditor } from './../types/article';
+import { GenericErrors } from './../types/error';
+import { buildGenericFormField } from './../types/genericFormField';
+import { ContainerPage } from './ContainerPage';
+import { GenericForm } from './GenericForm';
 
 export function ArticleEditor({ 
   onSubmit, 

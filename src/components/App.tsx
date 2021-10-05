@@ -1,16 +1,16 @@
 import { Fragment } from 'react';
 import { HashRouter, Redirect, Route, RouteProps, Switch } from 'react-router-dom';
-import { EditArticle } from '../Pages/EditArticle/EditArticle';
-import { Footer } from '../Footer/Footer';
-import { Header } from '../Header/Header';
-import { Home } from '../Pages/Home/Home';
-import { Login } from '../Pages/Login/Login';
-import { NewArticle } from '../Pages/NewArticle/NewArticle';
-import { Register } from '../Pages/Register/Register';
-import { Settings } from '../Pages/Settings/Settings';
-import { ProfilePage } from '../Pages/ProfilePage/ProfilePage';
-import { ArticlePage } from '../Pages/ArticlePage/ArticlePage';
-import { getKeyPair } from '../../types/user';
+import { EditArticle } from './Pages/EditArticle';
+import { Footer } from './Footer';
+import { Header } from './Header';
+import { Home } from './Pages/Home';
+import { Login } from './Pages/Login';
+import { NewArticle } from './Pages/NewArticle';
+import { Register } from './Pages/Register';
+import { Settings } from './Pages/Settings';
+import { ProfilePage } from './Pages/ProfilePage';
+import { ArticlePage } from './Pages/ArticlePage';
+import { getKeyPair } from './../services/user';
 
 
 export function App() {

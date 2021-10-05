@@ -1,10 +1,10 @@
 import { useState } from 'react';
 import { useLocation, useParams } from 'react-router-dom';
-import { redirect } from '../../../types/location';
-import { Profile } from '../../../types/profile';
-import { useFollowers, useProfiles, useUser, wrap } from '../../../types/user';
-import { ArticlesViewer } from '../../ArticlesViewer/ArticlesViewer';
-import { UserInfo } from '../../UserInfo/UserInfo';
+import { redirect } from '../../types/location';
+import { Profile } from '../../types/profile';
+import { useFollowers, useProfiles, useUser, wrap } from '../../services/user';
+import { ArticlesViewer } from '../ArticlesViewer';
+import { UserInfo } from '../UserInfo';
 
 export function ProfilePage() {
   const user = useUser()

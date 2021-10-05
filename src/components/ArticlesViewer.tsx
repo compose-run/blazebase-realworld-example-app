@@ -1,9 +1,9 @@
 import { Fragment, useState } from 'react';
-import { useArticleFavorites, useArticles } from '../../types/article';
-import { classObjectToClassName } from '../../types/style';
-import { useFollowers, useUser, wrap } from '../../types/user';
-import { ArticlePreview } from '../ArticlePreview/ArticlePreview';
-import { Pagination } from '../Pagination/Pagination';
+import { classObjectToClassName } from './../types/style';
+import { useFollowers, useUser, wrap } from './../services/user';
+import { ArticlePreview } from './ArticlePreview';
+import { Pagination } from './Pagination';
+import { useArticleFavorites, useArticles } from '../services/article';
 
 export function ArticlesViewer({
   toggleClassName,

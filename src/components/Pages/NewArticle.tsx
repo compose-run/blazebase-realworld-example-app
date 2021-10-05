@@ -1,7 +1,8 @@
 import { useState } from 'react';
-import { ArticleForEditor, useArticlesDB } from '../../../types/article';
-import { getKeyPair, sign } from '../../../types/user';
-import { ArticleEditor } from '../../ArticleEditor/ArticleEditor';
+import { ArticleForEditor } from './../../types/article';
+import { useArticlesDB } from './../../services/article';
+import { getKeyPair, sign } from './../../services/user';
+import { ArticleEditor } from './../ArticleEditor';
 
 export function NewArticle() {
   const keypair = getKeyPair()
