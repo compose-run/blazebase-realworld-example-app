@@ -1,7 +1,7 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { store } from '../../../state/store';
 import { useStore } from '../../../state/storeHooks';
-import { getKeyPair, sign, UserSettings, useUsers } from '../../../types/user';
+import { getKeyPair, sign, UserSettings, useUser, useUsers } from '../../../types/user';
 import { buildGenericFormField } from '../../../types/genericFormField';
 import { GenericForm } from '../../GenericForm/GenericForm';
 import { SettingsState, startUpdate, updateErrors, updateField } from './Settings.slice';
@@ -15,32 +15,42 @@ export interface SettingsField {
 }
 
 export function Settings() {
-  const { user, errors, updating } = useStore(({ settings }) => settings);
+
+  
+  const oldUser = useUser()
+  const [newUser, setUser] = useState(null)
+  const [errors, setErrors] = useState({})
+  const [updating, setUpdating] = useState(false)
+
+
+  const user = newUser || (oldUser.isNone() ? {} : oldUser.unwrap())
+  
+  function onUpdateField(name: string, value: string) {
+    setUser({... user, [name]: value })
+  }
 
   const keypair = getKeyPair()  
   const [, emitUserAction] = useUsers()
 
-  function onUpdateSettings(user: UserSettings) {
-    return async (ev: React.FormEvent) => {
-      ev.preventDefault();
-      store.dispatch(startUpdate());
-      if (keypair.isSome()) {
-        const errors = await emitUserAction(sign(keypair.unwrap().privateKey, {
-          type: "UPDATE",
-          publicKey: keypair.unwrap().publicKey,
-          newUser: {
-            ...user,
-            publicKey: keypair.unwrap().publicKey
-          }
-        }))
-        if (Object.keys(errors).length) {
-          store.dispatch(updateErrors(errors))
-        } else {
-          location.hash = '/';
+  async function onUpdateSettings(ev: React.FormEvent) {
+    ev.preventDefault();
+    setUpdating(true)
+    if (keypair.isSome()) {
+      const errors = await emitUserAction(sign(keypair.unwrap().privateKey, {
+        type: "UPDATE",
+        publicKey: keypair.unwrap().publicKey,
+        newUser: {
+          ...user,
+          publicKey: keypair.unwrap().publicKey
         }
-
+      }))
+      setUpdating(false)
+      if (Object.keys(errors).length) {
+        setErrors(errors)
+      } else {
+        location.hash = '/';
       }
-      
+
     }
   }
 
@@ -56,7 +66,7 @@ export function Settings() {
             submitButtonText='Update Settings'
             errors={errors}
             onChange={onUpdateField}
-            onSubmit={onUpdateSettings(user)}
+            onSubmit={onUpdateSettings}
             fields={[
               buildGenericFormField({ name: 'image', placeholder: 'URL of profile picture' }),
               buildGenericFormField({ name: 'username', placeholder: 'Your Name' }),
@@ -81,12 +91,7 @@ export function Settings() {
   );
 }
 
-function onUpdateField(name: string, value: string) {
-  store.dispatch(updateField({ name: name as keyof SettingsState['user'], value }));
-}
-
 function _logout() {
   localStorage.removeItem('keypair');
-  store.dispatch(logout());
   location.hash = '/';
 }
