@@ -7,15 +7,15 @@ import { ArticlesViewer } from '../ArticlesViewer';
 import { UserInfo } from '../UserInfo';
 
 export function ProfilePage() {
-  const user = useUser()
+  const user = useUser();
   const [, emitFollowAction] = useFollowers();
-  const [submittingFollow, setSubmittingFollow] = useState(false)
+  const [submittingFollow, setSubmittingFollow] = useState(false);
 
   const { username } = useParams<{ username: string }>();
   const favorites = useLocation().pathname.endsWith('favorites');
 
   const profiles = useProfiles();
-  const profile = profiles && profiles.find(u => u.username === username)
+  const profile = profiles && profiles.find((u) => u.username === username);
 
   async function onFollowToggle(profile: Profile) {
     if (!user) {
@@ -23,30 +23,31 @@ export function ProfilePage() {
       return;
     }
 
-    setSubmittingFollow(true)
-  
-    await emitFollowAction({
-      type: profile.following ? "UnfollowAction" : "FollowAction",
-      follower: user.uid,
-      leader: profile.uid
-    })
+    setSubmittingFollow(true);
 
-    setSubmittingFollow(false)
+    await emitFollowAction({
+      type: profile.following ? 'UnfollowAction' : 'FollowAction',
+      follower: user.uid,
+      leader: profile.uid,
+    });
+
+    setSubmittingFollow(false);
   }
 
   return (
     <div className='profile-page'>
-      {profile 
-        ? <UserInfo
-            user={profile}
-            disabled={submittingFollow}
-            onFollowToggle={() => onFollowToggle(profile)}
-            onEditSettings={() => redirect('settings')}
-          />
-        : <div className='article-preview' key={1}>
-            Loading profile...
-          </div>
-      }
+      {profile ? (
+        <UserInfo
+          user={profile}
+          disabled={submittingFollow}
+          onFollowToggle={() => onFollowToggle(profile)}
+          onEditSettings={() => redirect('settings')}
+        />
+      ) : (
+        <div className='article-preview' key={1}>
+          Loading profile...
+        </div>
+      )}
       <div className='container'>
         <div className='row'>
           <div className='col-xs-12 col-md-10 offset-md-1'>
@@ -67,6 +68,6 @@ export function ProfilePage() {
 function onTabChange(username: string): (page: string) => void {
   return async (page) => {
     const favorited = page === 'Favorited Articles';
-    location.hash = `#/profile/${username}${!favorited ? '' : '/favorites'}`;
+    redirect(`profile/${username}${!favorited ? '' : 'favorites'}`);
   };
 }

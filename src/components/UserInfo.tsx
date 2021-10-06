@@ -12,8 +12,8 @@ export function UserInfo({
   onFollowToggle?: () => void;
   onEditSettings?: () => void;
 }) {
-  const user = useUser()
-  const sessionUsername = user ? user.username : ''
+  const user = useUser();
+  const sessionUsername = user ? user.username : '';
 
   return (
     <div className='user-info'>

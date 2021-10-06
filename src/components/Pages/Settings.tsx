@@ -5,7 +5,8 @@ import { GenericForm } from './../GenericForm';
 import { ContainerPage } from './../ContainerPage';
 import { UserSettings } from '../../types/user';
 import { signOut } from 'firebase/auth';
-import { firebaseAuth} from '../../services/compose';
+import { firebaseAuth } from '../../services/compose';
+import { redirect } from '../../types/location';
 
 export interface SettingsField {
   name: keyof UserSettings;
@@ -15,37 +16,38 @@ export interface SettingsField {
 }
 
 export function Settings() {
-  const oldUser = useUser()
-  const [newUser, setUser] = useState(null)
-  const [errors, setErrors] = useState({})
-  const [updating, setUpdating] = useState(false)
+  const oldUser = useUser();
+  const [newUser, setUser] = useState(null);
+  const [errors, setErrors] = useState({});
+  const [updating, setUpdating] = useState(false);
 
+  const user = newUser || (oldUser ? oldUser : {});
 
-  const user = newUser || (oldUser ? oldUser : {})
-  
   function onUpdateField(name: string, value: string) {
-    setUser({... user, [name]: value })
+    setUser({ ...user, [name]: value });
   }
 
-  const [, emitUserAction] = useUsers()
+  const [, emitUserAction] = useUsers();
 
   async function onUpdateSettings(ev: React.FormEvent) {
     ev.preventDefault();
-    if (!oldUser) { return }
+    if (!oldUser) {
+      return;
+    }
 
-    setUpdating(true)
+    setUpdating(true);
     // TODO if email change, do that in firebase auth
 
     const errors = await emitUserAction({
-      type: "UPDATE",
+      type: 'UPDATE',
       uid: oldUser.uid,
-      newUser: user
-    })
-    setUpdating(false)
+      newUser: user,
+    });
+    setUpdating(false);
     if (Object.keys(errors).length) {
-      setErrors(errors)
+      setErrors(errors);
     } else {
-      location.hash = '/';
+      redirect('');
     }
   }
 

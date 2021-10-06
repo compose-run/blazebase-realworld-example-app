@@ -1,50 +1,53 @@
-import { createUserWithEmailAndPassword } from "firebase/auth";
+import { createUserWithEmailAndPassword } from 'firebase/auth';
 import { buildGenericFormField } from './../../types/genericFormField';
 import { GenericForm } from './../GenericForm';
 import { useUsers } from './../../services/user';
 import { ContainerPage } from './../ContainerPage';
 import { useState } from 'react';
-import { firebaseAuth} from "../../services/compose";
+import { firebaseAuth } from '../../services/compose';
+import { redirect } from '../../types/location';
+import { Link } from 'react-router-dom';
 
 export function Register() {
-
-  const [errors, setErrors] = useState({})
-  const [signingUp, setSigningUp] = useState(false)
-  const [user, setUser] = useState({username: '', email: '', password: ''})
+  const [errors, setErrors] = useState({});
+  const [signingUp, setSigningUp] = useState(false);
+  const [user, setUser] = useState({ username: '', email: '', password: '' });
 
   const [users, emitUserAction] = useUsers();
 
   function onUpdateField(name: string, value: string) {
-    setUser({...user, [name]: value})
+    setUser({ ...user, [name]: value });
   }
 
   async function onSignUp(ev: React.FormEvent) {
     ev.preventDefault();
-    setSigningUp(true)
+    setSigningUp(true);
 
-    try { 
-      const { user: { uid }} = await createUserWithEmailAndPassword(firebaseAuth, user.email, user.password)
+    try {
+      const {
+        user: { uid },
+      } = await createUserWithEmailAndPassword(firebaseAuth, user.email, user.password);
       const errors = await emitUserAction({
-        type: "SIGN_UP",
+        type: 'SIGN_UP',
         user: {
-          username: user.username, 
-          email: user.email, 
+          username: user.username,
+          email: user.email,
           uid,
           bio: null,
-          image: null
-        }
-      })
-      
+          image: null,
+        },
+      });
+
       if (Object.keys(errors).length) {
-        setErrors(errors)
+        setErrors(errors);
       } else {
-        location.hash = '#/';
+        redirect('');
       }
     } catch (e) {
-      setErrors({register: [e.message]})
+      setErrors({ register: [e.message] });
     }
-    
-    setSigningUp(false)
+
+    setSigningUp(false);
   }
 
   return (
@@ -53,7 +56,7 @@ export function Register() {
         <div className='col-md-6 offset-md-3 col-xs-12'>
           <h1 className='text-xs-center'>Sign up</h1>
           <p className='text-xs-center'>
-            <a href='/#/login'>Have an account?</a>
+            <Link to='login'>Have an account?</Link>
           </p>
 
           <GenericForm

@@ -10,29 +10,34 @@ export function ArticlesViewer({
   tabs,
   selectedTab,
   onTabChange,
-  uid
+  uid,
 }: {
   toggleClassName: string;
   tabs: string[];
   selectedTab: string;
   onTabChange?: (tab: string) => void;
-  uid?: string
+  uid?: string;
 }) {
-  const [currentPage, setCurrentPage] = useState(1)
-  const user = useUser()
-  const articles = useArticles()
-  const [following] = useFollowers()
-  const [favorites] = useArticleFavorites()
-  
-  const feedArticles = articles && articles.filter(article =>
-    selectedTab === "Global Feed" || 
-    (selectedTab === "Your Feed" && user && following[user.uid] && following[user.uid][article.author.uid]) ||
-    (selectedTab === "My Articles" && article.author.uid === uid) ||
-    (selectedTab === "Favorited Articles" && favorites.users[uid] && favorites.users[uid][article.slug])
-  ).sort((a,b) => a.createdAt.getTime() - b.createdAt.getTime())
-  
-  const pageArticles = feedArticles && feedArticles.slice((currentPage - 1) * 10, currentPage * 10)
-  const articlesCount = feedArticles ? feedArticles.length : 0
+  const [currentPage, setCurrentPage] = useState(1);
+  const user = useUser();
+  const articles = useArticles();
+  const [following] = useFollowers();
+  const [favorites] = useArticleFavorites();
+
+  const feedArticles =
+    articles &&
+    articles
+      .filter(
+        (article) =>
+          selectedTab === 'Global Feed' ||
+          (selectedTab === 'Your Feed' && user && following[user.uid] && following[user.uid][article.author.uid]) ||
+          (selectedTab === 'My Articles' && article.author.uid === uid) ||
+          (selectedTab === 'Favorited Articles' && favorites.users[uid] && favorites.users[uid][article.slug])
+      )
+      .sort((a, b) => a.createdAt.getTime() - b.createdAt.getTime());
+
+  const pageArticles = feedArticles && feedArticles.slice((currentPage - 1) * 10, currentPage * 10);
+  const articlesCount = feedArticles ? feedArticles.length : 0;
 
   return (
     <Fragment>
@@ -82,9 +87,8 @@ function Tab({ tab, active, onClick }: { tab: string; active: boolean; onClick: 
   );
 }
 
-function ArticleList({ articles }) { 
-  return articles
-   ? (
+function ArticleList({ articles }) {
+  return articles ? (
     <Fragment>
       {articles.length === 0 && (
         <div className='article-preview' key={1}>
@@ -92,16 +96,12 @@ function ArticleList({ articles }) {
         </div>
       )}
       {articles.map((article, index) => (
-        <ArticlePreview
-          key={article.slug}
-          article={article}
-        />
+        <ArticlePreview key={article.slug} article={article} />
       ))}
     </Fragment>
-  )
-  : (
-      <div className='article-preview' key={1}>
-        Loading articles...
-      </div>
-    )
+  ) : (
+    <div className='article-preview' key={1}>
+      Loading articles...
+    </div>
+  );
 }

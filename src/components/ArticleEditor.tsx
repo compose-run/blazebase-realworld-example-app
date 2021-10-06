@@ -5,43 +5,43 @@ import { buildGenericFormField } from './../types/genericFormField';
 import { ContainerPage } from './ContainerPage';
 import { GenericForm } from './GenericForm';
 
-export function ArticleEditor({ 
-  onSubmit, 
-  submitting, 
+export function ArticleEditor({
+  onSubmit,
+  submitting,
   article,
-  errors
-}: { 
-  onSubmit: (newArticle: ArticleForEditor) => void, 
-  submitting: boolean,
-  article?: ArticleForEditor,
-  errors: GenericErrors
+  errors,
+}: {
+  onSubmit: (newArticle: ArticleForEditor) => void;
+  submitting: boolean;
+  article?: ArticleForEditor;
+  errors: GenericErrors;
 }) {
-  const [currentArticle, setCurrentArticle] = useState(article)
-  const [ tagTextbox, setTagTextbox ] = useState("")
+  const [currentArticle, setCurrentArticle] = useState(article);
+  const [tagTextbox, setTagTextbox] = useState('');
 
   function onUpdateField(name: string, value: string) {
-    if (name === "tag") {
-      setTagTextbox(value)
-    } else if (name !== "tagList") {
+    if (name === 'tag') {
+      setTagTextbox(value);
+    } else if (name !== 'tagList') {
       setCurrentArticle({
         ...currentArticle,
-        [name]: value
-      })
+        [name]: value,
+      });
     }
   }
 
   function onAddTag() {
     setCurrentArticle({
       ...currentArticle,
-      tagList: currentArticle.tagList.concat([tagTextbox])
-    })
+      tagList: currentArticle.tagList.concat([tagTextbox]),
+    });
   }
-  
+
   function onRemoveTag(_: string, index: number) {
     setCurrentArticle({
       ...currentArticle,
-      tagList: currentArticle.tagList.filter((_, i) => i !== index)
-    })
+      tagList: currentArticle.tagList.filter((_, i) => i !== index),
+    });
   }
 
   return (
@@ -53,7 +53,10 @@ export function ArticleEditor({
             disabled={submitting}
             errors={errors}
             onChange={onUpdateField}
-            onSubmit={(ev) => {ev.preventDefault; onSubmit(currentArticle)}}
+            onSubmit={(ev) => {
+              ev.preventDefault;
+              onSubmit(currentArticle);
+            }}
             submitButtonText='Publish Article'
             onAddItemToList={onAddTag}
             onRemoveListItem={onRemoveTag}

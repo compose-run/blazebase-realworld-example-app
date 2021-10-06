@@ -2,6 +2,7 @@ import { Fragment } from 'react';
 import { HashRouter, NavLink } from 'react-router-dom';
 import { useUser } from '../services/user';
 import { User } from '../types/user';
+import { Link } from 'react-router-dom';
 
 export function Header() {
   const user = useUser();
@@ -9,14 +10,14 @@ export function Header() {
   return (
     <nav className='navbar navbar-light'>
       <div className='container'>
-        <a className='navbar-brand' href='/#/'>
+        <Link className='navbar-brand' to=''>
           conduit
-        </a>
+        </Link>
         <ul className='nav navbar-nav pull-xs-right'>
           <HashRouter>
-            <NavItem text='Home' href='/' />
+            <NavItem text='Home' href='' />
 
-            {user ? <UserLinks user={user} /> :  <GuestLinks />}
+            {user ? <UserLinks user={user} /> : <GuestLinks />}
           </HashRouter>
         </ul>
       </div>

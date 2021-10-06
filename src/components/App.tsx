@@ -12,45 +12,44 @@ import { ProfilePage } from './Pages/ProfilePage';
 import { ArticlePage } from './Pages/ArticlePage';
 import { useUser } from '../services/user';
 
-
 export function App() {
-  const userIsLogged = !!useUser()
+  const userIsLogged = !!useUser();
 
   return (
     <HashRouter>
-        <Fragment>
-          <Header />
-          <Switch>
-            <GuestOnlyRoute exact path='/login' userIsLogged={userIsLogged}>
-              <Login />
-            </GuestOnlyRoute>
-            <GuestOnlyRoute exact path='/register' userIsLogged={userIsLogged}>
-              <Register />
-            </GuestOnlyRoute>
-            <UserOnlyRoute exact path='/settings' userIsLogged={userIsLogged}>
-              <Settings />
-            </UserOnlyRoute>
-            <UserOnlyRoute exact path='/editor' userIsLogged={userIsLogged}>
-              <NewArticle />
-            </UserOnlyRoute>
-            <UserOnlyRoute exact path='/editor/:slug' userIsLogged={userIsLogged}>
-              <EditArticle />
-            </UserOnlyRoute>
-            <Route path='/profile/:username'>
-              <ProfilePage />
-            </Route>
-            <Route path='/article/:slug'>
-              <ArticlePage />
-            </Route>
-            <Route exact path='/'>
-              <Home />
-            </Route>
-            <Route path='*'>
-              <Redirect to='/' />
-            </Route>
-          </Switch>
-          <Footer />
-        </Fragment>
+      <Fragment>
+        <Header />
+        <Switch>
+          <GuestOnlyRoute exact path='/login' userIsLogged={userIsLogged}>
+            <Login />
+          </GuestOnlyRoute>
+          <GuestOnlyRoute exact path='/register' userIsLogged={userIsLogged}>
+            <Register />
+          </GuestOnlyRoute>
+          <UserOnlyRoute exact path='/settings' userIsLogged={userIsLogged}>
+            <Settings />
+          </UserOnlyRoute>
+          <UserOnlyRoute exact path='/editor' userIsLogged={userIsLogged}>
+            <NewArticle />
+          </UserOnlyRoute>
+          <UserOnlyRoute exact path='/editor/:slug' userIsLogged={userIsLogged}>
+            <EditArticle />
+          </UserOnlyRoute>
+          <Route path='/profile/:username'>
+            <ProfilePage />
+          </Route>
+          <Route path='/article/:slug'>
+            <ArticlePage />
+          </Route>
+          <Route exact path='/'>
+            <Home />
+          </Route>
+          <Route path='*'>
+            <Redirect to='/' />
+          </Route>
+        </Switch>
+        <Footer />
+      </Fragment>
     </HashRouter>
   );
 }

@@ -14,27 +14,28 @@ export function ArticlePreview({
     title,
     description,
     tagList,
-    author: { image = '', username = ''},
-  }}: {
+    author: { image = '', username = '' },
+  },
+}: {
   article: Article;
 }) {
-  const user = useUser()
-  const [isSubmitting, setSubmitting] = useState(false)
+  const user = useUser();
+  const [isSubmitting, setSubmitting] = useState(false);
 
-  const [, emitFavoriteAction] = useArticleFavorites()
+  const [, emitFavoriteAction] = useArticleFavorites();
 
   async function onFavoriteToggle() {
-    if (!user) return
+    if (!user) return;
 
-    setSubmitting(true)
+    setSubmitting(true);
 
     await emitFavoriteAction({
-      type: favorited ? "UnfavoriteAction" : "FavoriteAction",
+      type: favorited ? 'UnfavoriteAction' : 'FavoriteAction',
       slug,
       uid: user.uid,
-    })
+    });
 
-    setSubmitting(false)
+    setSubmitting(false);
   }
 
   return (
@@ -58,12 +59,12 @@ export function ArticlePreview({
           <i className='ion-heart'></i> {favoritesCount}
         </button>
       </div>
-      <a href={`/#/article/${slug}`} className='preview-link'>
+      <Link to={`article/${slug}`} className='preview-link'>
         <h1>{title}</h1>
         <p>{description}</p>
         <span>Read more...</span>
         <TagList tagList={tagList} />
-      </a>
+      </Link>
     </div>
   );
 }
