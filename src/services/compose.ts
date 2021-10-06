@@ -28,30 +28,30 @@ import {
 import { getAuth, onAuthStateChanged } from 'firebase/auth';
 
 /*
-next step: prettier
+- Debug all parts of the app
+- Comment code compose.ts file
 
-// TODO: prevent the uid field from being forged via security rules
-// TODO: prevent people from rewriting past histories or deleting each others events via security rules
+- Make a proper open source repo for firebase wrapper with a proper name
+- Convert below todos to issues:
 
-Comment code compose.ts file
-Make a proper open source repo for firebase wrapper with a proper name
-Convert below todos to issues
+- prevent the uid field from being forged via security rules
+- prevent people from rewriting past histories or deleting each others events via security rules
+
+- ensure that we only pull one namespace globally so we don't double subscribe and proccess things (maybe via wrapping in memoize?)
+- need a better recovery for when you accidentally overwrite the state (and want to migrate back to a state that doesn't exist semantically)
+- need better handling of normalization/denormalization (relationships) & querying
+
+- allow key-based lookup when not the whole object is needed
+- allow full range of firebase querying for reduced state (otherwise pulling everything in every sub component kills composability really)
+- disallow randomness (and other non-determinisim) or make it determantistic https://croquet.io/docs/croquet/tutorial-2_8_random.html
+
+- minify reducer before caching to ignore comments and whitespace etc https://www.npmjs.com/package/uglify-js (how does croquet do this?)
+- useOptimisticRealtimeReducer: optimistic updates (proccess stream events locally instead of server roundtrip; and then jumps to new server state if it's difference)
+- disallow "/" in names or encode it for people
+- catch all firebase errors
+- garbage collect localstorage cache (and firebase cache)
+
 */
-
-// TODO - a la Conductor (and triple store) make each thing an ID-editable thing; & also push deeper into references
-// TODO - ensure that we only pull one namespace globally so we don't double subscribe and proccess things (maybe via wrapping in memoize?)
-// TODO - need a better recovery for when you accidentally overwrite the state (and want to migrate back to a state that doesn't exist semantically)
-// TODO - need better handling of normalization/denormalization (relationships) & querying
-
-// TODO - allow key-based lookup when not the whole object is needed
-// TODO - allow full range of firebase querying for reduced state (otherwise pulling everything in every sub component kills composability really)
-// TODO - disallow randomness (and other non-determinisim) or make it determantistic https://croquet.io/docs/croquet/tutorial-2_8_random.html
-
-// TODO - minify reducer before caching to ignore comments and whitespace etc https://www.npmjs.com/package/uglify-js (how does croquet do this?)
-// TODO - useOptimisticRealtimeReducer: optimistic updates (proccess stream events locally instead of server roundtrip; and then jumps to new server state if it's difference)
-// TODO - disallow "/" in names or encode it for people
-// TODO - catch all firebase errors
-// TODO - garbage collect localstorage cache (and firebase cache)
 
 const firebaseConfig = {
   apiKey: 'AIzaSyDZtMhc933h53_fbJFmyM76Mh6aRreHZE8',
@@ -124,7 +124,6 @@ export function emitWithResponse(name, value) {
   const id = Math.random();
   const promise = new Promise((resolve, reject) => (window.composeResolvers[id] = resolve));
   emit('streams', name, value, undefined, id);
-
   return promise;
 }
 

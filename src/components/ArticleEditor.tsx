@@ -54,7 +54,7 @@ export function ArticleEditor({
             errors={errors}
             onChange={onUpdateField}
             onSubmit={(ev) => {
-              ev.preventDefault;
+              ev.preventDefault();
               onSubmit(currentArticle);
             }}
             submitButtonText='Publish Article'
