@@ -18,12 +18,11 @@ import {
 import { getAuth, onAuthStateChanged } from 'firebase/auth';
 
 /*
-
 Before we release the sample app:
 
-- Debug all parts of the app & add proper types everywhere
-- Comment code compose.ts file & add proper types everywhere
+- Debug all parts of the app
 - uniform handling of normalization/denormalization (relationships) & querying
+- Docs
 
 Before we allow anyone to use the library themselves:
 
