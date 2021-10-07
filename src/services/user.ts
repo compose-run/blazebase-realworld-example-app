@@ -19,8 +19,8 @@ export const useUsers = () =>
   useRealtimeReducer({
     // <User[] | null, UserAction, GenericErrors>({
     name: `conduit-users-${usersVersion}`,
-    initialState: getRealtimeState(`conduit-users-${usersVersion - 1}`),
-    loadingState: null,
+    initialValue: getRealtimeState(`conduit-users-${usersVersion - 1}`),
+    loadingValue: null,
     reducer: (users, action, resolve) => {
       let errors = {};
       let returnValue = users;
@@ -66,8 +66,8 @@ export const useProfiles = (): Profile[] => {
 export const useFollowers = () =>
   useRealtimeReducer({
     name: `conduit-followers-${usersVersion}`,
-    initialState: getRealtimeState(`conduit-followers-${usersVersion - 1}`),
-    loadingState: null,
+    initialValue: getRealtimeState(`conduit-followers-${usersVersion - 1}`),
+    loadingValue: null,
     reducer: (userFollowers, action, resolve) => {
       const { follower, leader } = action;
 

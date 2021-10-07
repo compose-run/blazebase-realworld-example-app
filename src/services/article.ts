@@ -47,8 +47,8 @@ export const useArticlesDB = () =>
   useRealtimeReducer({
     // <ArticleDB[] | null, ArticleAction, ArticleResolve>(
     name: `conduit-articles-${articlesVersion}`,
-    initialState: getRealtimeState(`conduit-articles-${articlesVersion - 1}`),
-    loadingState: null,
+    initialValue: getRealtimeState(`conduit-articles-${articlesVersion - 1}`),
+    loadingValue: null,
     reducer: (articles, action, resolve) => {
       let errors = {};
       let returnValue = articles;
@@ -116,8 +116,8 @@ export const useArticleTags = () =>
   useRealtimeReducer({
     //<ArticleTag[] | null, ArticleTagAction, GenericErrors>(
     name: `conduit-tags-${articlesVersion}`,
-    initialState: [], //getRealtimeState(`conduit-tags-${articlesVersion - 1}`),
-    loadingState: null,
+    initialValue: [], //getRealtimeState(`conduit-tags-${articlesVersion - 1}`),
+    loadingValue: null,
     reducer: (articleTagsOption, action, resolve) => {
       let errors = {};
       let returnValue = articleTagsOption as ArticleTag[]; // TODO rearchitect this around lookups like favorites?
@@ -151,8 +151,8 @@ function updateArticleTags(payload: { slug: string; tagList: string[] }) {
 export const useArticleFavorites = () =>
   useRealtimeReducer({
     name: `conduit-favorites-${articlesVersion}`,
-    initialState: { articles: {}, users: {} }, //getRealtimeState(`conduit-favorites-${articlesVersion - 5}`),
-    loadingState: null,
+    initialValue: { articles: {}, users: {} }, //getRealtimeState(`conduit-favorites-${articlesVersion - 5}`),
+    loadingValue: null,
     reducer: ({ articles, users }, action, resolve) => {
       if (!action.uid) {
         resolve({ errors: { unauthorized: 'to perform this action' } });
@@ -213,8 +213,8 @@ export const useArticles = (): Article[] => {
 export const useArticleCommentsDB = () =>
   useRealtimeReducer({
     name: `conduit-comments-${articlesVersion}`,
-    initialState: getRealtimeState(`conduit-comments-${articlesVersion - 1}`),
-    loadingState: null,
+    initialValue: getRealtimeState(`conduit-comments-${articlesVersion - 1}`),
+    loadingValue: null,
     reducer: (comments, action, resolve) => {
       if (!action.uid) {
         resolve({ errors: { unauthorized: 'to perform this action' } });
