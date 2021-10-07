@@ -44,8 +44,7 @@ interface ArticleResolve {
 
 const articlesVersion = 110;
 export const useArticlesDB = () =>
-  useRealtimeReducer({
-    // <ArticleDB[] | null, ArticleAction, ArticleResolve>(
+  useRealtimeReducer<ArticleDB[],ArticleAction,ArticleResolve>({
     name: `conduit-articles-${articlesVersion}`,
     initialValue: getRealtimeState(`conduit-articles-${articlesVersion - 1}`),
     loadingValue: null,
@@ -113,12 +112,11 @@ interface UpdateArticleTags {
 type ArticleTagAction = UpdateArticleTags;
 
 export const useArticleTags = () =>
-  useRealtimeReducer({
-    //<ArticleTag[] | null, ArticleTagAction, GenericErrors>(
+  useRealtimeReducer<ArticleTag[],ArticleTagAction,GenericErrors>({
     name: `conduit-tags-${articlesVersion}`,
     initialValue: [], //getRealtimeState(`conduit-tags-${articlesVersion - 1}`),
     loadingValue: null,
-    reducer: (articleTagsOption, action, resolve) => {
+      reducer: (articleTagsOption, action, resolve) => {
       let errors = {};
       let returnValue = articleTagsOption as ArticleTag[]; // TODO rearchitect this around lookups like favorites?
       if (action.uid === 'TODO') {
@@ -148,12 +146,18 @@ function updateArticleTags(payload: { slug: string; tagList: string[] }) {
   return emitWithResponse(`conduit-tags-${articlesVersion}`, { ...payload, type: 'UpdateArticleTags' });
 }
 
+interface FavoriteAction {
+  type: 'FavoriteAction';
+  slug: string;
+  uid: string;
+}
+
 export const useArticleFavorites = () =>
   useRealtimeReducer({
     name: `conduit-favorites-${articlesVersion}`,
     initialValue: { articles: {}, users: {} }, //getRealtimeState(`conduit-favorites-${articlesVersion - 5}`),
     loadingValue: null,
-    reducer: ({ articles, users }, action, resolve) => {
+    reducer: ({ articles, users }, action: FavoriteAction, resolve) => {
       if (!action.uid) {
         resolve({ errors: { unauthorized: 'to perform this action' } });
         return { articles, users };
@@ -210,8 +214,31 @@ export const useArticles = (): Article[] => {
 
   return articles;
 };
+
+
+interface CreateCommentAction {
+  type: 'CreateComment';
+  uid: string;
+  body: string;
+  slug: string;
+  commentId: any; // TODO
+  createdAt: number;
+}
+
+interface DeleteCommentAction {
+  type: 'DeleteComment';
+  slug: string;
+  uid: string;
+  commentId: any; // TODO
+}
+
+type CommentAction = CreateCommentAction | DeleteCommentAction;
+
+
+type CommentDB = any;
+
 export const useArticleCommentsDB = () =>
-  useRealtimeReducer({
+  useRealtimeReducer<CommentDB,CommentAction,any>({
     name: `conduit-comments-${articlesVersion}`,
     initialValue: getRealtimeState(`conduit-comments-${articlesVersion - 1}`),
     loadingValue: null,
