@@ -1,7 +1,8 @@
 {
-  "name": "ts-redux-react-realworld-example-app",
+  "name": "blazebase-realworld-example-app",
   "version": "0.1.0",
   "private": true,
+  "homepage": "https://compose-run.github.io/blazebase-realworld-example-app",
   "dependencies": {
     "@testing-library/jest-dom": "^4.2.4",
     "@testing-library/react": "^9.5.0",
@@ -17,6 +18,7 @@
     "axios": "^0.21.1",
     "date-fns": "^2.23.0",
     "firebase": "^9.0.2",
+    "gh-pages": "^3.2.3",
     "ramda": "^0.27.1",
     "react": "^17.0.2",
     "react-dom": "^17.0.2",
@@ -31,7 +33,9 @@
     "eject": "react-scripts eject",
     "prettier:check": "prettier --check src",
     "prettier": "prettier --write src",
-    "lint": "eslint src"
+    "lint": "eslint src",
+    "predeploy": "npm run build",
+    "deploy": "gh-pages -d build"
   },
   "pre-commit": [
     "prettier:check",
