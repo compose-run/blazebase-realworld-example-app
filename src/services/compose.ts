@@ -268,6 +268,7 @@ type RealtimeReducerContext<a, b> =
 function getResolver(eventId: number) {
   const resolver = composeResolvers[eventId];
   if (resolver) {
+    // eslint-disable-next-line
     return (...args: any[]) => {
       delete composeResolvers[eventId];
       return resolver(...args);
