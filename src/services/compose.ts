@@ -69,7 +69,7 @@ export const firebaseAuth = getAuth(app);
 // a memory leak and when React detects and complains about it
 // This is a wrapper around useReducer that ensures React's
 // memory leak detector won't complain
-export const useReducerSafe = <R extends Reducer<any, any>>(
+export const useReducerSafe = <A, B, R extends Reducer<A, B>>(
   reducer: R,
   initialState: ReducerState<R>
 ): [ReducerState<R>, Dispatch<ReducerAction<R>>] => {
@@ -107,10 +107,10 @@ export const useFirebaseUser = () => {
 
 // This is a generic help to emit both stream events
 // as well as cached behavior values
-export const emit = async (
+export const emit = async <A>(
   type: string,
   name: string,
-  value: any,
+  value: A,
   ts?: Timestamp, // timestamp from an event if we have one
   id?: number // how we tie together an emitted event and the reducer's response
 ) => {
@@ -121,7 +121,7 @@ export const emit = async (
       id,
     });
   } catch (e) {
-    console.error('Error emitting event: ', e);
+    throw new Error('Error emitting event: ' + e.message);
   }
 };
 
@@ -130,16 +130,16 @@ export const emit = async (
 // When the reducer resolver that event, it passes that resolve function as the last argument.
 // Calling `await resolve(errors)` for example,
 // allows the event emitter to `await` errors from the "server".
-let composeResolvers = {};
+const composeResolvers = {};
 export function emitWithResponse<B, C>(name: string, value: B): Promise<C> {
   const id = Math.random();
-  const promise = new Promise<C>((resolve, reject) => (composeResolvers[id] = resolve));
+  const promise = new Promise<C>((resolve) => (composeResolvers[id] = resolve));
   emit('streams', name, value, undefined, id);
   return promise;
 }
 
 // cache all behaviors in localstorage for optimisic loading
-function cacheBehaviorLocalStorage(name: string, value: any, ts: Timestamp) {
+function cacheBehaviorLocalStorage<A>(name: string, value: A, ts: Timestamp) {
   localStorage.setItem(
     `compose-cache-${name}`,
     JSON.stringify({
@@ -174,7 +174,7 @@ export const getRealtimeState = async (name: string) => {
 
 // save the reducer code to firebase so we can ensure all reducers
 // with the same name are identical
-function saveReducer(name: string, reducerCode: string, initial: any) {
+function saveReducer<A>(name: string, reducerCode: string, initial: A) {
   setDoc(doc(db, 'behaviors-reducers', name), {
     reducerCode,
     initial,
@@ -194,7 +194,7 @@ interface ReductionEvent<b> {
   value: b;
   ts: Timestamp;
   kind: 'ReductionEvent';
-  id: any;
+  id: number;
 }
 
 interface CacheLoadedEvent<a> {
@@ -268,7 +268,7 @@ type RealtimeReducerContext<a, b> =
 function getResolver(eventId: number) {
   const resolver = composeResolvers[eventId];
   if (resolver) {
-    return (...args: any) => {
+    return (...args: any[]) => {
       delete composeResolvers[eventId];
       return resolver(...args);
     };
@@ -277,14 +277,14 @@ function getResolver(eventId: number) {
   }
 }
 
-function realtimeReducer<a, b>(
+function realtimeReducer<A, B, C>(
   name: string,
-  reducer: (acc: a, curr: b, resolver?: (c: any) => void) => a,
-  initialValue: a | Promise<a>,
-  loadingValue: a,
-  context: RealtimeReducerContext<a, b>,
-  event: RealtimeEvent<a, b>
-): RealtimeReducerContext<a, b> {
+  reducer: (acc: A, curr: B, resolver?: (c: C) => void) => A,
+  initialValue: A | Promise<A>,
+  loadingValue: A,
+  context: RealtimeReducerContext<A, B>,
+  event: RealtimeEvent<A, B>
+): RealtimeReducerContext<A, B> {
   const cacheOrLoadingValue = getCachedBehaviorLocalStorage(name) || loadingValue;
   if (context.kind === 'MismatchedReducer') {
     return context;
@@ -323,7 +323,7 @@ function realtimeReducer<a, b>(
       };
     } else if (event.kind === 'CacheEmptyEvent') {
       if (isPromise(initialValue)) {
-        (initialValue as Promise<a>).then((value) => {
+        (initialValue as Promise<A>).then((value) => {
           context.emitToSelf({
             currentValue: value,
             kind: 'InitialValuePromiseLoadedEvent',
@@ -337,16 +337,16 @@ function realtimeReducer<a, b>(
       } else {
         saveReducer(name, reducer.toString(), initialValue);
         const newContext = context.pendingEvents.reduce(
-          (context: RealtimeReducerContext<a, b>, event) =>
+          (context: RealtimeReducerContext<A, B>, event) =>
             realtimeReducer(name, reducer, initialValue, loadingValue, context, event),
           {
-            currentValue: initialValue as a,
+            currentValue: initialValue as A,
             kind: 'SetFromInitialValue',
           }
         );
-        // cacheBehaviorLocalStorage(name, newContext.currentValue, 'ts' in newContext && newContext.ts);
-        // emit('behaviors', name, newContext.currentValue, 'ts' in newContext && newContext.ts);
-        return context;
+        cacheBehaviorLocalStorage(name, newContext.currentValue, 'ts' in newContext && newContext.ts);
+        emit('behaviors', name, newContext.currentValue, 'ts' in newContext && newContext.ts);
+        return newContext;
       }
     } else if (event.kind === 'ReductionEvent') {
       return {
@@ -360,7 +360,7 @@ function realtimeReducer<a, b>(
     if (event.kind === 'InitialValuePromiseLoadedEvent') {
       saveReducer(name, reducer.toString(), event.currentValue);
       const newContext = context.pendingEvents.reduce(
-        (context: RealtimeReducerContext<a, b>, event) =>
+        (context: RealtimeReducerContext<A, B>, event) =>
           realtimeReducer(name, reducer, initialValue, loadingValue, context, event),
         {
           currentValue: event.currentValue,
@@ -461,7 +461,7 @@ export function useRealtimeReducer<A, B, C>({
           !isPromise(initialValue) && // todo - find a way to provide this warning for promises
           JSON.stringify(initial) !== JSON.stringify(initialValue)
         ) {
-          console.warn(`Initial value supplied to reducer ${name} is ignored because initial value already found`);
+          throw new Error(`Initial value supplied to reducer ${name} is ignored because initial value already found`);
         }
       }
     });
@@ -475,7 +475,7 @@ export function useRealtimeReducer<A, B, C>({
       limit(1)
     );
     getDocs(initialBehaviorFromCacheQuery).then((querySnapshot) => {
-      let doc = querySnapshot.docs[0];
+      const doc = querySnapshot.docs[0];
       if (!doc) {
         emitEvent({ kind: 'CacheEmptyEvent' });
       } else if (!doc.metadata.hasPendingWrites) {
@@ -494,7 +494,7 @@ export function useRealtimeReducer<A, B, C>({
     // It seems like this line might not be unsubscribing properly for React
     // sometimes it causes a memory leak warning, but it may be a race condition
     return onSnapshot(newStreamEventsQuery, (querySnapshot) => {
-      let doc = querySnapshot.docs[0];
+      const doc = querySnapshot.docs[0];
       if (doc && !doc.metadata.hasPendingWrites) {
         emitEvent({
           kind: 'ReductionEvent',
