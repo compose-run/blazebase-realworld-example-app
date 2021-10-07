@@ -533,6 +533,11 @@ export function useRealtimeReducer<A, B, C>(
   return [realtimeContext.currentValue, (value) => emitWithResponse(name, value)];
 }
 
-export function useRealtimeReducer2({ name, initialState, reducer, loadingState }) {
+export function useRealtimeReducer2<A,B,C>({name,initialState,reducer,loadingState}: 
+                                           { name : string, 
+                                             initialState : A | Promise<A>,
+                                             reducer : (acc: A, curr: B, resolver?: (c: C) => void) => A,
+                                             loadingState : A
+                                            }): [A, (b: B) => Promise<C>] {
   return useRealtimeReducer(name, reducer, initialState, loadingState);
 }
