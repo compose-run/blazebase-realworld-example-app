@@ -1,5 +1,5 @@
 import { useProfiles, useUser, useUsers } from './user';
-import { emitWithResponse, useRealtimeReducer, useRealtimeReducer2 } from '../services/compose';
+import { emitWithResponse, getRealtimeState, useRealtimeReducer } from '../services/compose';
 import { GenericErrors } from '../types/error';
 import { Article, ArticleForEditor } from '../types/article';
 
@@ -42,11 +42,14 @@ interface ArticleResolve {
   errors?: GenericErrors;
 }
 
-const articlesVersion = 102;
+const articlesVersion = 110;
 export const useArticlesDB = () =>
-  useRealtimeReducer<ArticleDB[] | null, ArticleAction, ArticleResolve>(
-    `conduit-articles-${articlesVersion}`,
-    (articles, action, resolve) => {
+  useRealtimeReducer({
+    // <ArticleDB[] | null, ArticleAction, ArticleResolve>(
+    name: `conduit-articles-${articlesVersion}`,
+    initialState: getRealtimeState(`conduit-articles-${articlesVersion - 1}`),
+    loadingState: null,
+    reducer: (articles, action, resolve) => {
       let errors = {};
       let returnValue = articles;
       if (action.uid) {
@@ -94,9 +97,7 @@ export const useArticlesDB = () =>
 
       return returnValue;
     },
-    [],
-    null
-  );
+  });
 interface ArticleTag {
   slug: string;
   tag: string;
@@ -111,11 +112,13 @@ interface UpdateArticleTags {
 
 type ArticleTagAction = UpdateArticleTags;
 
-const articleTagsDbId = `conduit-tags-${articlesVersion}`;
 export const useArticleTags = () =>
-  useRealtimeReducer<ArticleTag[] | null, ArticleTagAction, GenericErrors>(
-    articleTagsDbId,
-    (articleTagsOption, action, resolve) => {
+  useRealtimeReducer({
+    //<ArticleTag[] | null, ArticleTagAction, GenericErrors>(
+    name: `conduit-tags-${articlesVersion}`,
+    initialState: [], //getRealtimeState(`conduit-tags-${articlesVersion - 1}`),
+    loadingState: null,
+    reducer: (articleTagsOption, action, resolve) => {
       let errors = {};
       let returnValue = articleTagsOption as ArticleTag[]; // TODO rearchitect this around lookups like favorites?
       if (action.uid === 'TODO') {
@@ -133,23 +136,22 @@ export const useArticleTags = () =>
       resolve(errors);
       return returnValue;
     },
-    [],
-    null
-  );
+  });
 
 export const useTags = () => {
   const [articleTags] = useArticleTags();
   return articleTags && Array.from(new Set(articleTags.map(({ tag }) => tag)));
 };
 
+// TODO - what's going on with this function...?
 function updateArticleTags(payload: { slug: string; tagList: string[] }) {
-  return emitWithResponse(articleTagsDbId, { ...payload, type: 'UpdateArticleTags' });
+  return emitWithResponse(`conduit-tags-${articlesVersion}`, { ...payload, type: 'UpdateArticleTags' });
 }
 
 export const useArticleFavorites = () =>
-  useRealtimeReducer2({
+  useRealtimeReducer({
     name: `conduit-favorites-${articlesVersion}`,
-    initialState: { articles: {}, users: {} }, //getRealtimeState(`conduit-favorites-${articlesVersion-1}`),
+    initialState: { articles: {}, users: {} }, //getRealtimeState(`conduit-favorites-${articlesVersion - 5}`),
     loadingState: null,
     reducer: ({ articles, users }, action, resolve) => {
       if (!action.uid) {
@@ -209,9 +211,9 @@ export const useArticles = (): Article[] => {
   return articles;
 };
 export const useArticleCommentsDB = () =>
-  useRealtimeReducer2({
+  useRealtimeReducer({
     name: `conduit-comments-${articlesVersion}`,
-    initialState: {}, // getRealtimeState(`conduit-comments-${articlesVersion}`),
+    initialState: getRealtimeState(`conduit-comments-${articlesVersion - 1}`),
     loadingState: null,
     reducer: (comments, action, resolve) => {
       if (!action.uid) {

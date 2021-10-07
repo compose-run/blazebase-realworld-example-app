@@ -1,4 +1,4 @@
-import { getRealtimeState, useFirebaseUser, useRealtimeReducer, useRealtimeReducer2 } from '../services/compose';
+import { getRealtimeState, useFirebaseUser, useRealtimeReducer } from '../services/compose';
 import { GenericErrors } from '../types/error';
 import { Profile } from '../types/profile';
 import { User } from '../types/user';
@@ -14,11 +14,14 @@ interface UpdateUserAction {
 
 type UserAction = SignUpUserAction | UpdateUserAction;
 
-const usersVersion = 101;
+const usersVersion = 103;
 export const useUsers = () =>
-  useRealtimeReducer<User[], UserAction, GenericErrors>(
-    `conduit-users-${usersVersion}`,
-    (users, action, resolve) => {
+  useRealtimeReducer({
+    // <User[] | null, UserAction, GenericErrors>({
+    name: `conduit-users-${usersVersion}`,
+    initialState: getRealtimeState(`conduit-users-${usersVersion - 1}`),
+    loadingState: null,
+    reducer: (users, action, resolve) => {
       let errors = {};
       let returnValue = users;
       if (action.type === 'SIGN_UP') {
@@ -44,9 +47,7 @@ export const useUsers = () =>
       resolve(errors);
       return returnValue;
     },
-    getRealtimeState(`conduit-users-${usersVersion - 1}`),
-    null
-  );
+  });
 
 export const useProfiles = (): Profile[] => {
   const user = useUser();
@@ -63,7 +64,7 @@ export const useProfiles = (): Profile[] => {
 };
 
 export const useFollowers = () =>
-  useRealtimeReducer2({
+  useRealtimeReducer({
     name: `conduit-followers-${usersVersion}`,
     initialState: getRealtimeState(`conduit-followers-${usersVersion - 1}`),
     loadingState: null,
