@@ -2,11 +2,12 @@ import { useProfiles, useUser, useUsers } from './user';
 import { emitWithResponse, getRealtimeState, useRealtimeReducer } from '../services/compose';
 import { GenericErrors } from '../types/error';
 import { Article, ArticleForEditor } from '../types/article';
+import { User, UId } from '../types/user';
 
 interface CreateArticleAction {
   type: 'CreateArticleAction';
   article: ArticleForEditor;
-  uid: string;
+  uid: UId;
   slug: string;
   createdAt: number;
 }
@@ -15,14 +16,14 @@ interface UpdateArticleAction {
   type: 'UpdateArticleAction';
   article: ArticleForEditor;
   slug: string;
-  uid: string;
+  uid: UId;
   updatedAt: number;
 }
 
 interface DeleteArticleAction {
   type: 'DeleteArticleAction';
   slug: string;
-  uid: string;
+  uid: UId;
 }
 
 type ArticleAction = CreateArticleAction | UpdateArticleAction | DeleteArticleAction;
@@ -34,7 +35,7 @@ export interface ArticleDB {
   body: string;
   createdAt: number;
   updatedAt: number;
-  uid: string;
+  uid: UId;
 }
 
 interface ArticleResolve {
@@ -106,7 +107,7 @@ interface UpdateArticleTags {
   type: 'UpdateArticleTags';
   slug: string;
   tagList: string[];
-  uid: string;
+  uid: UId;
 }
 
 type ArticleTagAction = UpdateArticleTags;
@@ -149,7 +150,7 @@ function updateArticleTags(payload: { slug: string; tagList: string[] }) {
 interface FavoriteAction {
   type: 'FavoriteAction';
   slug: string;
-  uid: string;
+  uid: UId;
 }
 
 export const useArticleFavorites = () =>
@@ -215,32 +216,48 @@ export const useArticles = (): Article[] => {
   return articles;
 };
 
+// TODO: Deduplicate shared fields in these actions.
 interface CreateCommentAction {
   type: 'CreateComment';
-  uid: string;
+  uid: UId;
   body: string;
   slug: string;
-  commentId: any; // TODO
+  commentId: number;
   createdAt: number;
 }
 
 interface DeleteCommentAction {
   type: 'DeleteComment';
+  uid: UId;
   slug: string;
-  uid: string;
-  commentId: any; // TODO
+  commentId: number;
 }
 
 type CommentAction = CreateCommentAction | DeleteCommentAction;
 
-type CommentDB = any;
+type Slug = string;
+
+interface Comment {
+  uid: UId;
+  body: string;
+  slug: string;
+  commentId: number;
+  createdAt: number;
+  author: User;
+}
+
+type CommentDB = { [key: Slug]: [Comment]; };
+
+interface CommentResolve {
+  errors?: { unauthorized?: string };
+}
 
 export const useArticleCommentsDB = () =>
-  useRealtimeReducer<CommentDB, CommentAction, any>({
+  useRealtimeReducer({
     name: `conduit-comments-${articlesVersion}`,
     initialValue: getRealtimeState(`conduit-comments-${articlesVersion - 1}`),
     loadingValue: null,
-    reducer: (comments, action, resolve) => {
+    reducer: (comments: CommentDB, action: CommentAction, resolve) => {
       if (!action.uid) {
         resolve({ errors: { unauthorized: 'to perform this action' } });
         return comments;
@@ -272,7 +289,7 @@ export const useArticleCommentsDB = () =>
   });
 
 export const useArticleComments = () => {
-  const [comments] = useArticleCommentsDB();
+  const [comments]:[CommentDB,any] = useArticleCommentsDB();
   const [users] = useUsers();
 
   return (
@@ -284,7 +301,7 @@ export const useArticleComments = () => {
         comments.map((comment) => ({
           ...comment,
           createdAt: new Date(comment.createdAt),
-          author: users.find((u) => u.uid === comment.uid),
+          author: users.find((u : User) => u.uid === comment.uid),
         })),
       ])
     )

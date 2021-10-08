@@ -1,7 +1,8 @@
 import { getRealtimeState, useFirebaseUser, useRealtimeReducer } from '../services/compose';
 import { GenericErrors } from '../types/error';
 import { Profile } from '../types/profile';
-import { User } from '../types/user';
+import { User, UId } from '../types/user';
+
 interface SignUpUserAction {
   type: 'SIGN_UP';
   user: User;
@@ -9,14 +10,16 @@ interface SignUpUserAction {
 interface UpdateUserAction {
   type: 'UPDATE';
   newUser: User;
-  uid: string;
+  uid: UId;
 }
 
 type UserAction = SignUpUserAction | UpdateUserAction;
 
+type UserDB = User[]
+
 const usersVersion = 103;
 export const useUsers = () =>
-  useRealtimeReducer({
+  useRealtimeReducer<UserDB,UserAction,any>({
     // <User[] | null, UserAction, GenericErrors>({
     name: `conduit-users-${usersVersion}`,
     initialValue: getRealtimeState(`conduit-users-${usersVersion - 1}`),
@@ -63,12 +66,21 @@ export const useProfiles = (): Profile[] => {
   );
 };
 
+interface FollowUserAction {
+  type: 'FollowAction' | 'UnfollowAction';
+  uid: UId;
+  follower: UId;
+  leader: UId;
+}
+
+//type FollowUserAction = DoFollowUserAction | UnFollowUserAction;
+
 export const useFollowers = () =>
   useRealtimeReducer({
     name: `conduit-followers-${usersVersion}`,
     initialValue: getRealtimeState(`conduit-followers-${usersVersion - 1}`),
     loadingValue: null,
-    reducer: (userFollowers, action, resolve) => {
+    reducer: (userFollowers, action: FollowUserAction, resolve) => {
       const { follower, leader } = action;
 
       if (action.uid !== follower) {
@@ -90,7 +102,7 @@ export const useFollowers = () =>
 
 export const useUser = () => {
   const firebaseUser = useFirebaseUser();
-  const [users] = useUsers();
+  const [users]: [UserDB, any] = useUsers();
 
   return firebaseUser && users && users.find((user) => user.uid === firebaseUser.uid);
 };
