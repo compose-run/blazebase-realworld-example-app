@@ -15,7 +15,7 @@ import {
   setDoc,
   Timestamp,
 } from 'firebase/firestore';
-import { getAuth, onAuthStateChanged } from 'firebase/auth';
+import { getAuth, onAuthStateChanged, User } from 'firebase/auth';
 
 // TODO - will need to find a way for users to supply their own firebase credentials
 const firebaseConfig = {
@@ -66,11 +66,17 @@ function isPromise<A>(p: Promise<A> | A): boolean {
   return p && Object.prototype.toString.call(p) === '[object Promise]';
 }
 
+type maybeFirebaseUser = User | null;
+
 // This seems like a more React-safe way to access
 // the currently-logged-in Firebase user.
 // The other way `getAuth(app).currentUser` doesn't work with React all of the time
-export const useFirebaseUser = () => {
-  const [firebaseUser, setFirebaseUser] = useReducerSafe((acc, curr) => curr, null);
+export const useFirebaseUser = (): maybeFirebaseUser => {
+  const [firebaseUser, setFirebaseUser] = useReducerSafe<
+    maybeFirebaseUser,
+    maybeFirebaseUser,
+    Reducer<maybeFirebaseUser, maybeFirebaseUser>
+  >((acc, curr) => curr, null);
   useEffect(() => onAuthStateChanged(firebaseAuth, (user) => setFirebaseUser(user)), []);
   return firebaseUser;
 };
