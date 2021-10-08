@@ -17,35 +17,6 @@ import {
 } from 'firebase/firestore';
 import { getAuth, onAuthStateChanged } from 'firebase/auth';
 
-/*
-Before we release the sample app:
-
-- Debug all parts of the app
-- uniform handling of normalization/denormalization (relationships) & querying
-- Docs
-
-Before we allow anyone to use the library themselves:
-
-- Make a proper open source repo for firebase wrapper with a proper name
-- prevent the uid field from being forged via security rules
-- prevent people from rewriting past histories or deleting each others events via security rules
-- ensure that we only pull one namespace globally so we don't double subscribe and proccess things (maybe via wrapping in memoize?)
-- disallow "/" in names or encode it for people
-- catch all firebase errors
-- garbage collect localstorage cache (and firebase cache)
-- minify reducer before caching to ignore comments and whitespace etc https://www.npmjs.com/package/uglify-js 
-  - but also keep unminified version to give error message proper diff
-
-- Convert below todos to issues:
-
-- allow key-based lookup when not the whole object is needed
-- allow full range of firebase querying for reduced state (otherwise pulling everything in every sub component kills composability really)
-- need a better recovery for when you accidentally overwrite the state (and want to migrate back to a state that doesn't exist semantically)
-- disallow randomness (and other non-determinisim) or make it determantistic https://croquet.io/docs/croquet/tutorial-2_8_random.html
-- useOptimisticRealtimeReducer: optimistic updates (proccess stream events locally instead of server roundtrip; and then jumps to new server state if it's difference)
-
-*/
-
 // TODO - will need to find a way for users to supply their own firebase credentials
 const firebaseConfig = {
   apiKey: 'AIzaSyDZtMhc933h53_fbJFmyM76Mh6aRreHZE8',
