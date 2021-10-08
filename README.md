@@ -120,7 +120,13 @@ It can be useful to spy the current value of some state:
 getRealtimeState('my-state-1').then(console.log);
 ```
 
-It is also useful in migrations:
+It is also useful in migrations. More on this in the **Migrations** sections below.
+
+## Migrations
+
+TODO
+
+#### Example
 
 ```ts
 const myStateVersion = 8
@@ -131,24 +137,30 @@ useRealtimeReducer({
 })
 ```
 
-More on this in the **Migrations** sections below.
-
-## Migrations
-
-TODO
-
-#### Example
-
 ## Authentication
 
+Authentication is handled by Firebase. They have email & password, magic link, Facebook, Twitter, and many other authentication methods.
+
+You can read more about web authentication for Firebase here: https://firebase.google.com/docs/auth/web/start
+
+### useFirebaseUser(): [User](https://firebase.google.com/docs/reference/js/auth.user?hl=en)
+
+Once you authenticate via one of Firebase's methods, you can access the currently-logged-in Firebase user with `useFirebaseUser` hook.
+
+Most importantly, this gives you access to the logged-in user's id `uid`, which is the basis of **Authorization and Access Control**, described below.
+
+## Authorization & Access Control
+
+Once you have a user logged in, you can add the `uid` field to any action you emit to a reducer. Then, in the reducer function, you can trust that the author of that action has that `uid`.
+
+In other words, we enforce (via Firebase Security Rules) that the `uid` field on all incoming actions corresponds to that of the user emitting the action. This can't be forged.
+
+So any other security validation (enforcing uniqueness, enforcing ownership of resources) happens _inside_ the reducer. This means that you don't have to mess with Firebase's Security Rules: you can handle all that logic in your `useRealtimeReducer` hook.
+
+### Example
+
 TODO
 
-### useFirebaseUser
+## Private data - _coming soon_
 
-### signInWithEmailAndPassword
-
-### createUserWithEmailAndPassword
-
-## Authorization
-
-TODO
+Currently all data in Blazebase is public, but we are working on a way to add this capability.
