@@ -124,18 +124,45 @@ It is also useful in migrations. More on this in the **Migrations** sections bel
 
 ## Migrations
 
-TODO
+Realtime reducers are _immutable_ in the sense that once created, can _never be redefined or arbitrarily mutated_. Any state change is fully described in the reducer function, and you can't change that function. If you try to, you'll get an error message telling you to migrate to a new reducer.
 
-#### Example
+This is inspired by immutability in functional programming, one of the core abstractions in React. While we of course need data to _change over time_, we want to model that reactivity immutably. Unlike a database, which is a big blob of mutable state, which any part of your app can mutate in any way at any time, all persistent state in Blazebase is defined once and only once, and cannot be mutated from anywhere. Only its predefined actions can affect it, in the ways predefined by its reducer.
+
+Thus: the question of migration. In a normal database app, migrations happen whenever the schema changes. In Blazebase, migrations happen whenever either the schema _or_ the reducer function changes.
+
+However, a simple migration without a schema change is easy: just want to migrate over all the data. This is how you set it up:
+
+1. Create a version number for a piece or group of pieces of related state
+2. Put that version number in the state's name
+3. Set the initial state to the previous version's state - 1
+4. Handle the base case (where `useRealtimeState` returns `null`) by providing an _initial_ initial value
 
 ```ts
-const myStateVersion = 8
+const veryFirstValue = []
+const myStateVersion = 0
 useRealtimeReducer({
   name: `my-state-${myStateVersion}`,
-  initialValue: useRealtimeState(`my-state-${myStateVersion - 1}`),
+  initialValue: useRealtimeState(`my-state-${myStateVersion - 1}`).then(s => s || veryFirstValue),
   ...
 })
 ```
+
+In the case where you need to make a more traditional migration because of a schema change, you can include that logic, and then return to the versioning scheme:
+
+```ts
+const veryFirstValue = []
+const myStateVersion = 11
+const myStateMigrations = {
+  11: (oldState) => { ... }
+}
+useRealtimeReducer({
+  name: `my-state-${myStateVersion}`,
+  initialValue: useRealtimeState(`my-state-${myStateVersion - 1}`).then(s => myStateMigrations[myStateVersion] ? myStateMigrations[myStateVersion](s) : s),
+  ...
+})
+```
+
+A similar scheme can be used for creating forks of your realtime state for working in git branches.
 
 ## Authentication
 
