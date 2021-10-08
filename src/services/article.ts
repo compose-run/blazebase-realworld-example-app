@@ -44,7 +44,7 @@ interface ArticleResolve {
 
 const articlesVersion = 110;
 export const useArticlesDB = () =>
-  useRealtimeReducer<ArticleDB[],ArticleAction,ArticleResolve>({
+  useRealtimeReducer<ArticleDB[], ArticleAction, ArticleResolve>({
     name: `conduit-articles-${articlesVersion}`,
     initialValue: getRealtimeState(`conduit-articles-${articlesVersion - 1}`),
     loadingValue: null,
@@ -112,11 +112,11 @@ interface UpdateArticleTags {
 type ArticleTagAction = UpdateArticleTags;
 
 export const useArticleTags = () =>
-  useRealtimeReducer<ArticleTag[],ArticleTagAction,GenericErrors>({
+  useRealtimeReducer<ArticleTag[], ArticleTagAction, GenericErrors>({
     name: `conduit-tags-${articlesVersion}`,
     initialValue: [], //getRealtimeState(`conduit-tags-${articlesVersion - 1}`),
     loadingValue: null,
-      reducer: (articleTagsOption, action, resolve) => {
+    reducer: (articleTagsOption, action, resolve) => {
       let errors = {};
       let returnValue = articleTagsOption as ArticleTag[]; // TODO rearchitect this around lookups like favorites?
       if (action.uid === 'TODO') {
@@ -215,7 +215,6 @@ export const useArticles = (): Article[] => {
   return articles;
 };
 
-
 interface CreateCommentAction {
   type: 'CreateComment';
   uid: string;
@@ -234,11 +233,10 @@ interface DeleteCommentAction {
 
 type CommentAction = CreateCommentAction | DeleteCommentAction;
 
-
 type CommentDB = any;
 
 export const useArticleCommentsDB = () =>
-  useRealtimeReducer<CommentDB,CommentAction,any>({
+  useRealtimeReducer<CommentDB, CommentAction, any>({
     name: `conduit-comments-${articlesVersion}`,
     initialValue: getRealtimeState(`conduit-comments-${articlesVersion - 1}`),
     loadingValue: null,
