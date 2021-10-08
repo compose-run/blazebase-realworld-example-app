@@ -38,7 +38,7 @@
     "deploy": "gh-pages -d build"
   },
   "pre-commit": [
-    "prettier:check",
+    "prettier",
     "lint"
   ],
   "eslintConfig": {
