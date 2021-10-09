@@ -60,9 +60,9 @@ It correctly bundles React in production mode and optimizes the build for the be
 
 The build is minified and the filenames include the hashes.
 
-Your app is ready to be deployed!
+### `npm run deploy`
 
-See the section about [deployment](https://facebook.github.io/create-react-app/docs/deployment) for more information.
+This project is configured to be deployed to Github Pages, which works because the routing is hash-based and Blazebase is fully serverless.
 
 # Blazebase
 
@@ -87,28 +87,58 @@ Blazebase isn't currently ready public use. Contact steve@compose.run if you're 
 
 ## API
 
-### `useRealtimeReducer({name, initialValue, reducer}): [value, emitter]`
+### `useRealtimeReducer`
 
-This is the core Blazebase function. It is a realtime and persistent version of the built-in `useReducer` React hook. Like `useReducer` it takes an `initialValue` (which can be a Promise) and a `reducer` (as keyword arguments), but it also accepts a couple of extra parameters necessary for realtime persistence: `name` to uniquely identify the persistent state and `loadingValue` to be used during the initial load of state.
+This is the core Blazebase function. It is a realtime and persistent version of the built-in `useReducer` React hook. Like `useReducer` it takes an `initialValue` and a `reducer` (as keyword arguments), but it also accepts a couple of extra parameters necessary for realtime persistence: `name` to uniquely identify the persistent state and `loadingValue` to be used during the initial load of state.
 
 ```ts
 useRealtimeReducer<A,B,C>({
   name: string;
   initialValue: A | Promise<A>;
-  reducer: (accumulator: A, current: B, resolver?: (c: C) => void) => A;
   loadingValue: A;
+  reducer: (accumulator: A, current: B, resolver?: (c: C) => void) => A;
 }): [A, (b: B) => Promise<C>] {)
 ```
 
-Like `useReducer`, the `useRealtimeReducer` hook returns an array. The first value represents the realtime, persistent state. The second is a function which allows you to emit values ("actions" in Redux terminology) to the reducer.
+It returns an array. The first value represents the realtime, persistent state. The second is a function which allows you to emit values ("actions" in Redux terminology) to the reducer.
 
-You can imagine the reducer "running on the server", but in reality it runs on every user's browser. This means that \_reducers **must** be deterministic. When you use `Date.now` or `Math.random()`, do it on the client and emit it to the reducer.
+You can imagine the reducer "running on the server", but in reality it runs on every user's browser. This means that _reducers **must** be deterministic_. When you use `Date.now` or `Math.random()`, do it on the client and emit those non-deterministic values to the reducer.
 
-`userRealtimeReducer` provides a way for the action emitter and reducer to communicate directly with each other. This can useful when the frontend waits on a reducer to confirm or reject an action. For example, when a user picks a name that needs to be unique, your app can `await emitter(someAction)` to which can return a success or rejection message. You can send these messages back to emitters by having your reducer accept a third argument: a `resolver` function, which you can call when you wait to resolve the promise that the emitter is waiting on.
+`userRealtimeReducer` provides a way for the reducer to communicate directly back to the action emitter. This can useful when the frontend waits on a reducer to confirm or reject an action. For example, when a user picks a name that needs to be unique, your app can `await emitter(someAction)` for success or rejection message. You can send these messages back to emitters by having your reducer accept a third argument: a `resolver` function. In the reducer, you can `resolve(someMessage)` which will resolve the Promise for the emitter of that action.
 
 #### Example Usage
 
-TODO
+```ts
+interface Message {
+  body: string;
+  createdAt: number;
+}
+
+interface NewMessage {
+  type: 'NewMessage';
+  newMessage: Message;
+}
+
+type MessageAction = NewMessage;
+
+type MessageError = string;
+
+const useMessages = useRealtimeReducer<Message[] | null, MessageAction, MessageError>({
+  name: 'messages',
+  initialValue: [],
+  loadingValue: null,
+  reducer: (oldValue, action, resolve) => {
+    if (action.type === 'NewMessage') {
+      if (action.newMessage.body.length < 240) {
+        return [...oldValue, action.newMessage];
+      } else {
+        resolve('Message too long');
+        return oldValue;
+      }
+    }
+  },
+});
+```
 
 ### `getRealtimeState<A>(name: string): Promise<A | null>`
 
@@ -186,7 +216,62 @@ So any other security validation (enforcing uniqueness, enforcing ownership of r
 
 ### Example
 
-TODO
+```ts
+interface Message {
+  body: string;
+  createdAt: number;
+  uid: UId;
+  id: string;
+}
+
+interface NewMessage {
+  type: 'NewMessage';
+  newMessage: Message;
+  uid: UId;
+}
+
+interface DeleteMessage{
+  type: "DeleteMessage";
+  uid: UId;
+  id: string;
+}
+
+type MessageAction = NewMessage | DeleteMessage;
+
+type MessageError = string;
+
+const useMessages = useRealtimeReducer<Message[] | null, MessageAction, MessageError>({
+  name: 'messages',
+  initialValue: [],
+  loadingValue: null,
+  reducer: (messages, action, resolve) => {
+    if (action.type === 'NEW_MESSAGE') {
+      if (action.newMessage.body.length < 240) {
+        if (action.uid == action.newMessage.uid) {
+          return [...messages, action.newMessage];
+        } else {
+          resolve("User is not authorized to submit this message")
+          return messages
+        }
+      } else {
+        resolve('Message too long');
+        return messages;
+      }
+    } else if (action.type === "DeleteMessage") {
+      const message = messages.find({id} => action.id === id)
+      if (!message) {
+        resolve('Message not found to delete')
+        return messages
+      } else if (message.uid !== action.uid) {
+        resolve('User is not authorized to delete this message')
+        return messages
+      else {
+        return messages.filter({id} => action.id !== id)
+      }
+    }
+  }
+});
+```
 
 ## Private data - _coming soon_
 
